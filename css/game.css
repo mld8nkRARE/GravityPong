@@ -1,0 +1,8 @@
+/* css/game.css */
+
+#gameCanvas {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Можно добавить дополнительные стили для UI элементов, если понадобятся */

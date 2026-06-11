@@ -19,7 +19,7 @@ class Ball {
         this.y = CONFIG.CANVAS.HEIGHT / 2;
         this.initialSpeed = CONFIG.BALL.INITIAL_SPEED;
         // Сбрасываем скорость до начальной
-        const angle = (Math.random() - 0.5) * Math.PI / 3; // ±30 градусов
+        const angle = (Math.random() - 0.5) * Math.PI / 12; // ±30 градусов
         this.velocityX = direction * this.initialSpeed * Math.cos(angle);
         this.velocityY = this.initialSpeed * Math.sin(angle);
 

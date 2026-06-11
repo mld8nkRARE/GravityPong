@@ -8,8 +8,8 @@ const CONFIG = {
     },
     BALL: {
         RADIUS: 8,
-        INITIAL_SPEED: 10,
-        MIN_SPEED: 10,
+        INITIAL_SPEED: 8,
+        MIN_SPEED: 8,
         MAX_SPEED: 25,  // Уменьшили с 15
         TRAIL_LENGTH: 10
     },

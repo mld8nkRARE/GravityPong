@@ -11,19 +11,27 @@ class Game {
         this.controlsSetup = false;
         this.isRunning = false; // НОВЫЙ ФЛАГ
         this.animationFrameId = null; // НОВЫЙ ФЛАГ для отмены анимации
+        this.statistics = window.gameStatistics;
     }
 
     init() {
+        window.gameStartTime = Date.now();
         // Останавливаем предыдущий цикл если он был
         this.stop();
 
-        // ВАЖНО: Полностью пересоздаём мяч с начальной скоростью
+        // Пересоздаём мяч с начальной скоростью
         this.ball = new Ball(CONFIG.CANVAS.WIDTH / 2, CONFIG.CANVAS.HEIGHT / 2);
         this.ball.reset(Math.random() > 0.5 ? 1 : -1);
 
-        this.paddle1 = new Paddle(CONFIG.PADDLE.OFFSET, true);
-        this.paddle2 = new Paddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH, false);
+        this.paddle1 = new PlayerPaddle(CONFIG.PADDLE.OFFSET);
 
+        if (SETTINGS.gameMode === 'AI') {
+            this.paddle2 = new AIPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
+            this.ai = new AI(SETTINGS.difficulty);
+        } else {
+            this.paddle2 = new PlayerPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
+            this.ai = null;
+        }
         // Планеты
         this.planets = [];
         for (let i = 0; i < SETTINGS.planetCount; i++) {
@@ -55,7 +63,8 @@ class Game {
             this.setupControls();
             this.controlsSetup = true;
         }
-
+        //CUSTOM EVENT LISTENER 
+        this.setupEventListeners();
         this.state = 'playing';
     }
 
@@ -122,6 +131,29 @@ class Game {
         window.addEventListener('keydown', this.keydownHandler);
         window.addEventListener('keyup', this.keyupHandler);
     }
+    setupEventListeners() {
+        // Удаляем старый слушатель, если был
+        if (this.gameEventHandler) {
+            window.removeEventListener(GAME_EVENT, this.gameEventHandler);
+        }
+
+        this.gameEventHandler = (e) => {
+            const { type, ...data } = e.detail;
+
+            console.log(`Обработано событие: ${type}`, data);
+
+            // Здесь можно добавлять логику (например, для статистики)
+            if (type === EVENT_TYPES.GOAL) {
+                console.log(`Гол! Забил: ${data.scorer}`);
+            }
+
+            if (type === EVENT_TYPES.GAME_OVER) {
+                console.log(`Игра окончена! Победитель: ${data.winner}`);
+            }
+        };
+
+        window.addEventListener(GAME_EVENT, this.gameEventHandler);
+    }
 
     pause() {
         this.state = 'paused';
@@ -140,7 +172,12 @@ class Game {
     activateHint(player, type) {
         const manager = player === 'player1' ? this.hintManager1 : this.hintManager2;
         if (!manager.activate(type)) return;
-
+        // === CUSTOM EVENT ===
+        dispatchGameEvent(EVENT_TYPES.HINT_USED, {
+            player: player,
+            hintType: type,
+            remainingUses: manager.hints[type]
+        });
         if (window.audioManager) {
             window.audioManager.playSound('powerup');
         }
@@ -180,7 +217,10 @@ class Game {
         }
         else if (type === 'enlarge') {
             const paddle = player === 'player1' ? this.paddle1 : this.paddle2;
-            paddle.activateEnlarge();
+            // Вызываем только если это PlayerPaddle (у AI нет этого метода)
+            if (typeof paddle.activateEnlarge === 'function') {
+                paddle.activateEnlarge();
+            }
         }
     }
 
@@ -210,8 +250,6 @@ class Game {
 
         if (!this.ball.ignoreGravity) {
             Physics.applyPlanetGravity(this.ball, this.planets);
-        } else {
-            console.log('Гравитация отключена - мяч заморожен');
         }
 
         Physics.limitSpeed(this.ball);
@@ -226,6 +264,13 @@ class Game {
     }
 
     handleGoal(scorer) {
+        // === CUSTOM EVENT ===
+        dispatchGameEvent(EVENT_TYPES.GOAL, {
+            scorer: scorer,
+            lives1: this.lives1,
+            lives2: this.lives2,
+            player1HintManager: this.hintManager1 ? this.hintManager1.hints : null
+        });
         if (window.audioManager) {
             window.audioManager.playSound('goal');
         }
@@ -256,6 +301,21 @@ class Game {
     gameOver(winner) {
         this.state = 'gameOver';
         this.winner = winner;
+        // === СОХРАНЕНИЕ СТАТИСТИКИ ===
+        this.statistics.saveResult(
+            winner,
+            this.lives1,
+            this.lives2,
+            SETTINGS.gameMode,
+            SETTINGS.difficulty
+        );
+        // === CUSTOM EVENT ===
+        dispatchGameEvent(EVENT_TYPES.GAME_OVER, {
+            winner: winner,
+            lives1: this.lives1,
+            lives2: this.lives2,
+            mode: SETTINGS.gameMode
+        });
 
         if (window.audioManager) {
             window.audioManager.playSound('gameOver');
@@ -277,8 +337,13 @@ class Game {
             this.planets.push(new Planet());
         }
 
-        this.paddle1 = new Paddle(CONFIG.PADDLE.OFFSET, true);
-        this.paddle2 = new Paddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH, false);
+        this.paddle1 = new PlayerPaddle(CONFIG.PADDLE.OFFSET);
+
+        if (SETTINGS.gameMode === 'AI') {
+            this.paddle2 = new AIPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
+        } else {
+            this.paddle2 = new PlayerPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
+        }
 
         this.state = 'playing';
     }
@@ -381,6 +446,7 @@ class Game {
             this.animationFrameId = null;
         }
     }
+
 }
 
 window.Game = Game;

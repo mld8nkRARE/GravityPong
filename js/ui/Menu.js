@@ -2,8 +2,11 @@
 
 class Menu {
   constructor() {
+    this.dataLoader = new DataLoader();
+    this.statistics = window.gameStatistics;
     this.createMenuHTML();
     this.attachEventListeners();
+    this.loadGameData();
   }
 
   createMenuHTML() {
@@ -14,6 +17,8 @@ class Menu {
                 <h1 class="game-title">GRAVITY PONG</h1>
                 <div class="menu-buttons">
                     <button class="menu-btn" id="btn-play">Играть</button>
+                    <button class="menu-btn" id="btn-howtoplay">Как играть</button>
+                    <button class="menu-btn" id="btn-stats">Статистика</button>
                     <button class="menu-btn" id="btn-settings">Настройки</button>
                     <button class="menu-btn" id="btn-controls">Управление</button>
                 </div>
@@ -142,7 +147,8 @@ class Menu {
     document.getElementById('btn-play').addEventListener('click', () => this.showScreen('mode-menu'));
     document.getElementById('btn-settings').addEventListener('click', () => this.showScreen('settings-menu'));
     document.getElementById('btn-controls').addEventListener('click', () => this.showScreen('controls-menu'));
-
+    document.getElementById('btn-howtoplay').addEventListener('click', () => { this.showHowToPlay(); });
+    document.getElementById('btn-stats').addEventListener('click', () => { this.showStatistics(); });
     document.querySelectorAll('.mode-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
@@ -276,6 +282,111 @@ class Menu {
   show() {
     document.getElementById('menu').style.display = 'flex';
     this.showScreen('main-menu');
+  }
+  async loadGameData() {
+    const data = await this.dataLoader.loadRules();
+    console.log('Загружены данные игры:', data);
+  }
+  showHowToPlay() {
+    const data = this.dataLoader.getRules();
+    const rulesList = this.dataLoader.getRulesList();
+
+    // Удаляем предыдущее модальное окно, если есть
+    const oldModal = document.getElementById('howtoplay-modal');
+    if (oldModal) oldModal.remove();
+
+    const modalHTML = `
+            <div id="howtoplay-modal" class="modal-overlay">
+                <div class="modal-content">
+                    <h2>${data.gameTitle || 'GRAVITY PONG'} — Как играть</h2>
+                    <p>${data.description || 'Описание игры'}</p>
+                    
+                    <h3>Правила:</h3>
+                    <ul class="rules-list">
+                        ${rulesList.map(rule => `<li>${rule}</li>`).join('')}
+                    </ul>
+
+                    <div class="modal-buttons">
+                        <button class="menu-btn" id="modal-close-btn">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer);
+
+    // Обработчик закрытия
+    document.getElementById('modal-close-btn').addEventListener('click', () => {
+      modalContainer.remove();
+    });
+
+    // Закрытие по клику на фон
+    modalContainer.querySelector('.modal-overlay').addEventListener('click', (e) => {
+      if (e.target === modalContainer.querySelector('.modal-overlay')) {
+        modalContainer.remove();
+      }
+    });
+  }
+  showStatistics() {
+    const stats = this.statistics.getHistory();
+    const winStats = this.statistics.getWinStats();
+
+    let html = `
+            <div id="stats-modal" class="modal-overlay">
+                <div class="modal-content stats-modal">
+                    <h2>📊 Статистика</h2>
+                    
+                    <div class="stats-summary">
+                        <div>Всего игр: <strong>${winStats.total}</strong></div>
+                        <div>Побед Игрока 1: <strong>${winStats.player1}</strong></div>
+                        <div>Побед Игрока 2 / AI: <strong>${winStats.player2}</strong></div>
+                    </div>
+
+                    <h3>Последние матчи</h3>
+                    <div class="stats-list">
+                        ${stats.length === 0 ?
+        '<p style="color:#888; text-align:center; padding:20px;">Пока нет завершённых игр</p>' :
+        stats.map((game, i) => `
+                                <div class="stat-item">
+                                    <span>${new Date(game.date).toLocaleDateString('ru-RU')}</span>
+                                    <span>${game.mode} ${game.difficulty ? `(${game.difficulty})` : ''}</span>
+                                    <span class="${game.winner === 'player1' ? 'win' : 'lose'}">
+                                        ${game.winner === 'player1' ? 'Победа 1' : 'Победа 2'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button class="menu-btn" id="stats-clear">Очистить статистику</button>
+                        <button class="menu-btn" id="stats-close">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    // Удаляем старое модальное окно
+    const old = document.getElementById('stats-modal');
+    if (old) old.parentElement.remove();
+
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = html;
+    document.body.appendChild(modalContainer);
+
+    document.getElementById('stats-close').addEventListener('click', () => {
+      modalContainer.remove();
+    });
+
+    document.getElementById('stats-clear').addEventListener('click', () => {
+      if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
+        this.statistics.clearAll();
+        modalContainer.remove();
+        // Сразу показываем обновлённое окно
+        setTimeout(() => this.showStatistics(), 100);
+      }
+    });
   }
 }
 

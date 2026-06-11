@@ -91,3 +91,108 @@ body {
 .pause-buttons .menu-btn {
     width: 100%;
 }
+
+/* ====================== МОДАЛЬНОЕ ОКНО ====================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border: 3px solid #00ffcc;
+    border-radius: 16px;
+    padding: 40px 50px;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 0 40px rgba(0, 255, 204, 0.4);
+    text-align: center;
+    color: #ffffff;
+}
+
+.modal-content h2 {
+    color: #00ffcc;
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.modal-content h3 {
+    color: #00ccff;
+    margin: 25px 0 15px;
+}
+
+.rules-list {
+    text-align: left;
+    line-height: 1.6;
+    margin: 15px 0 30px;
+    padding-left: 20px;
+}
+
+.rules-list li {
+    margin: 8px 0;
+}
+
+.modal-buttons {
+    margin-top: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* ← Основное расстояние между кнопками */
+    align-items: center;
+}
+
+/* Анимация появления */
+.modal-content {
+    animation: modalPop 0.4s ease-out;
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.7) translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.stats-modal {
+    max-width: 580px;
+}
+
+.stats-summary {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 4px 0;
+    border-radius: 6px;
+}
+
+.win {
+    color: #00ff88;
+}
+
+.lose {
+    color: #ff4466;
+}

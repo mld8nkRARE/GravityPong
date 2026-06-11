@@ -23,21 +23,7 @@ class Paddle {
         if (this.y > CONFIG.CANVAS.HEIGHT) this.y = -this.height;
         if (this.y + this.height < 0) this.y = CONFIG.CANVAS.HEIGHT;
 
-        if (this.isEnlarged) {
-            this.enlargeTimer--;
-            if (this.enlargeTimer <= 0) this.deactivateEnlarge();
-        }
-    }
 
-    activateEnlarge() {
-        this.isEnlarged = true;
-        this.height = this.baseHeight * 1.85;
-        this.enlargeTimer = CONFIG.HINTS.ENLARGE.duration / (1000 / CONFIG.GAME.FPS);
-    }
-
-    deactivateEnlarge() {
-        this.isEnlarged = false;
-        this.height = this.baseHeight;
     }
 
     draw(ctx) {

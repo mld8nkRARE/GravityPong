@@ -21,6 +21,12 @@ export class HintManager {
             enlarge: 0
         };
 
+        this.timerStarts = {
+            freeze: 0,
+            shield: 0,
+            enlarge: 0
+        };
+
         this.consecutiveGoals = 0;
         this.lastGoalTime = Date.now();
         this.lastRewardTime = Date.now();
@@ -37,7 +43,8 @@ export class HintManager {
         this.activeEffects[hintType] = true;
 
         const duration = CONFIG.HINTS[hintType.toUpperCase()].duration;
-        this.timers[hintType] = duration / (1000 / CONFIG.GAME.FPS);
+        this.timers[hintType] = duration;
+        this.timerStarts[hintType] = Date.now();
 
         return true;
     }
@@ -69,7 +76,7 @@ export class HintManager {
         const now = Date.now();
         const survivalTime = now - this.lastGoalTime;
 
-        if (survivalTime >= 30000 && (now - this.lastRewardTime) >= 30000) {
+        if (survivalTime >= 20000 && (now - this.lastRewardTime) >= 20000) {
             this.lastRewardTime = now;
             return this.addRandomHint();
         }
@@ -77,11 +84,11 @@ export class HintManager {
     }
 
     update() {
+        const now = Date.now();
         Object.keys(this.activeEffects).forEach(hintType => {
             if (this.activeEffects[hintType]) {
-                this.timers[hintType]--;
-
-                if (this.timers[hintType] <= 0) {
+                const elapsed = now - this.timerStarts[hintType];
+                if (elapsed >= this.timers[hintType]) {
                     this.activeEffects[hintType] = false;
                 }
             }
@@ -90,7 +97,9 @@ export class HintManager {
 
     getRemainingTime(hintType) {
         if (!this.activeEffects[hintType]) return 0;
-        return Math.ceil(this.timers[hintType] / CONFIG.GAME.FPS);
+        const elapsed = Date.now() - this.timerStarts[hintType];
+        const remaining = this.timers[hintType] - elapsed;
+        return Math.max(0, Math.ceil(remaining / 1000));
     }
 
     reset() {
@@ -104,6 +113,18 @@ export class HintManager {
             freeze: false,
             shield: false,
             enlarge: false
+        };
+
+        this.timers = {
+            freeze: 0,
+            shield: 0,
+            enlarge: 0
+        };
+
+        this.timerStarts = {
+            freeze: 0,
+            shield: 0,
+            enlarge: 0
         };
 
         this.consecutiveGoals = 0;

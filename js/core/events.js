@@ -15,8 +15,10 @@ export function dispatchGameEvent(type, data = {}) {
 export const EVENT_TYPES = {
     GOAL: 'goal',
     HINT_USED: 'hintUsed',
+    HINT_AWARDED: 'hintAwarded',
     GAME_OVER: 'gameOver',
     POWERUP_ACTIVATED: 'powerupActivated',
     PAUSE: 'pause',
-    RESUME: 'resume'
+    RESUME: 'resume',
+    WALL_HIT: 'wallHit'
 };

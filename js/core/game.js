@@ -27,6 +27,7 @@ export class Game {
         this.hintSystem = new HintSystem();
         this.pauseMenu = null;
         this.menu = null;
+        this.controlsSetup = false;
 
         this.setupEventListeners();
     }
@@ -48,11 +49,20 @@ export class Game {
                 if (this.audioManager) this.audioManager.playSound('powerup');
                 break;
 
+            case EVENT_TYPES.HINT_AWARDED:
+                if (this.audioManager) this.audioManager.playSound('hintAwarded');
+                break;
+
             case EVENT_TYPES.GAME_OVER:
                 if (this.audioManager) this.audioManager.playSound('gameOver');
                 break;
 
             case EVENT_TYPES.PAUSE:
+            case EVENT_TYPES.RESUME:
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
+                break;
+
+            case EVENT_TYPES.WALL_HIT:
                 if (this.audioManager) this.audioManager.playSound('wallHit');
                 break;
         }
@@ -83,7 +93,7 @@ export class Game {
             this.paddle2 = new AIPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
             this.ai = new AI(settings.difficulty);
         } else {
-            this.paddle2 = new PlayerPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
+            this.paddle2 = new PlayerPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH, false);
             this.ai = null;
         }
 
@@ -99,8 +109,10 @@ export class Game {
     }
 
     setupControlsOnce() {
-        this.keydownHandler = (e) => this.handleKeyDown(e);
+        if (this.controlsSetup) return;
+        this.controlsSetup = true;
 
+        this.keydownHandler = (e) => this.handleKeyDown(e);
         window.addEventListener('keydown', this.keydownHandler);
     }
 
@@ -182,9 +194,11 @@ export class Game {
             this.showHintAward('player1', hint1Reward);
         }
 
-        const hint2Reward = this.hintSystem.hintManager2.checkSurvivalReward();
-        if (hint2Reward) {
-            this.showHintAward('player2', hint2Reward);
+        if (settings.gameMode === 'PVP') {
+            const hint2Reward = this.hintSystem.hintManager2.checkSurvivalReward();
+            if (hint2Reward) {
+                this.showHintAward('player2', hint2Reward);
+            }
         }
     }
 
@@ -214,6 +228,9 @@ export class Game {
         this.renderer.drawLives(this.lives1, this.lives2);
 
         this.hintSystem.drawHints(this.renderer);
+
+        this.renderer.updateNotifications();
+        this.renderer.drawNotifications();
 
         if (this.state === 'paused') this.renderer.drawPauseScreen();
         if (this.state === 'gameOver') this.renderer.drawGameOver(this.winner);
@@ -277,8 +294,10 @@ export class Game {
         } else {
             this.lives1--;
             this.ball.reset(-1);
-            awardedHint = this.hintSystem.hintManager2.onGoalScored();
             this.hintSystem.hintManager1.onGoalConceded();
+            if (settings.gameMode === 'PVP') {
+                awardedHint = this.hintSystem.hintManager2.onGoalScored();
+            }
         }
 
         if (awardedHint) {
@@ -296,7 +315,10 @@ export class Game {
             enlarge: 'Увеличение'
         };
 
-        this.renderer.drawHintAward(hintNames[hintType]);
+        const color = player === 'player1' ? CONFIG.PADDLE.COLORS.PLAYER : CONFIG.PADDLE.COLORS.AI;
+
+        dispatchGameEvent(EVENT_TYPES.HINT_AWARDED, { player, hintType });
+        this.renderer.drawHintAward(hintNames[hintType], color);
     }
 
     gameOver(winner) {
@@ -325,11 +347,8 @@ export class Game {
         document.getElementById('gameCanvas').style.display = 'none';
         document.getElementById('menu').style.display = 'flex';
 
-        const mainMenu = document.getElementById('main-menu');
-        if (mainMenu) {
-            document.querySelectorAll('.menu-screen').forEach(s => s.style.display = 'none');
-            mainMenu.style.display = 'flex';
-            mainMenu.classList.add('active');
+        if (this.menu) {
+            this.menu.showScreen('main-menu');
         }
     }
 }

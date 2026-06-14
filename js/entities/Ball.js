@@ -1,4 +1,5 @@
 import { CONFIG } from '../core/config.js';
+import { dispatchGameEvent, EVENT_TYPES } from '../core/events.js';
 
 export class Ball {
     constructor(x, y) {
@@ -40,10 +41,12 @@ export class Ball {
         if (this.y - this.radius < 0) {
             this.y = this.radius;
             this.velocityY *= -1;
+            dispatchGameEvent(EVENT_TYPES.WALL_HIT);
         }
         if (this.y + this.radius > CONFIG.CANVAS.HEIGHT) {
             this.y = CONFIG.CANVAS.HEIGHT - this.radius;
             this.velocityY *= -1;
+            dispatchGameEvent(EVENT_TYPES.WALL_HIT);
         }
     }
 }

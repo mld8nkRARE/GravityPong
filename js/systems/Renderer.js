@@ -5,6 +5,48 @@ export class Renderer {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        this.notifications = [];
+    }
+
+    addNotification(text, color = '#00ff88') {
+        this.notifications.push({
+            text,
+            color,
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2,
+            alpha: 1,
+            startTime: Date.now(),
+            duration: 1500
+        });
+    }
+
+    updateNotifications() {
+        const now = Date.now();
+        this.notifications = this.notifications.filter(n => {
+            const elapsed = now - n.startTime;
+            if (elapsed >= n.duration) return false;
+
+            const progress = elapsed / n.duration;
+            n.y -= 1.2;
+            n.alpha = 1 - progress;
+
+            return true;
+        });
+    }
+
+    drawNotifications() {
+        const ctx = this.ctx;
+        this.notifications.forEach(n => {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 24px Arial';
+            ctx.fillStyle = n.color;
+            ctx.globalAlpha = n.alpha;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = n.color;
+            ctx.fillText(n.text, n.x, n.y);
+            ctx.restore();
+        });
     }
 
     clear() {
@@ -239,21 +281,7 @@ export class Renderer {
         this.ctx.textAlign = 'left';
     }
 
-    drawHintAward(hintName) {
-        const ctx = this.ctx;
-        const x = this.canvas.width / 2;
-        const y = 100;
-
-        ctx.save();
-        ctx.textAlign = 'center';
-
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#00ff88';
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#00ff88';
-        ctx.fillText(`+1 ${hintName}`, x, y);
-
-        ctx.shadowBlur = 0;
-        ctx.restore();
+    drawHintAward(hintName, color = '#00ff88') {
+        this.addNotification(`+1 ${hintName}`, color);
     }
 }

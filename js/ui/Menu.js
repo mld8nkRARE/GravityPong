@@ -11,11 +11,12 @@ export class Menu {
         this.game = null;
         this.dataLoader = new DataLoader();
         this.settingsManager = new SettingsManager(audioManager);
-        this.modalManager = new ModalManager();
+        this.modalManager = new ModalManager(audioManager);
         this.screenManager = new ScreenManager();
         this.createMenuHTML();
         this.screenManager.init();
         this.attachEventListeners();
+        this.attachClickSounds();
         this.loadGameData();
     }
 
@@ -175,6 +176,39 @@ export class Menu {
         this.attachModeAndDifficultyListeners();
         this.attachSettingsListeners();
         this.attachBackButtons();
+    }
+
+    attachClickSounds() {
+        const menuEl = document.getElementById('menu');
+
+        menuEl.querySelectorAll('.menu-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
+            });
+        });
+
+        menuEl.querySelectorAll('.mode-card, .difficulty-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
+            });
+        });
+
+        menuEl.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
+            });
+        });
+
+        menuEl.querySelectorAll('input[type="range"]').forEach(slider => {
+            let isDragging = false;
+            slider.addEventListener('mousedown', () => { isDragging = true; });
+            slider.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    if (this.audioManager) this.audioManager.playSound('buttonClick');
+                    isDragging = false;
+                }
+            });
+        });
     }
 
     attachMainMenuListeners() {

@@ -1,6 +1,7 @@
 export class ModalManager {
-    constructor() {
+    constructor(audioManager) {
         this.currentModal = null;
+        this.audioManager = audioManager;
     }
 
     show(html, onClose = null) {
@@ -25,6 +26,7 @@ export class ModalManager {
     attachCloseHandlers(container, onClose) {
         container.querySelectorAll('#modal-close-btn, #stats-close').forEach(btn => {
             btn.addEventListener('click', () => {
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
                 this.close();
                 if (onClose) onClose();
             });
@@ -109,6 +111,7 @@ export class ModalManager {
             const clearBtn = document.getElementById('stats-clear');
             if (clearBtn) {
                 clearBtn.addEventListener('click', () => {
+                    if (this.audioManager) this.audioManager.playSound('buttonClick');
                     if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
                         statistics.clearAll();
                         this.close();

@@ -95,17 +95,23 @@ export class PauseMenu {
         els.restartBtn = document.getElementById('btn-restart');
         els.exitBtn = document.getElementById('btn-exit');
 
-        els.resumeBtn.addEventListener('click', () => this.game.resume());
+        els.resumeBtn.addEventListener('click', () => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
+            this.game.resume();
+        });
         els.restartBtn.addEventListener('click', () => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
             this.hide();
             this.game.restart();
         });
         els.exitBtn.addEventListener('click', () => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
             this.hide();
             this.game.returnToMenu();
         });
 
         els.hintsToggle.addEventListener('change', (e) => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
             settings.showHints = e.target.checked;
             if (this.menu && this.menu.settingsManager) {
                 this.menu.settingsManager.saveSettings();
@@ -114,6 +120,7 @@ export class PauseMenu {
 
         els.soundToggle.addEventListener('change', (e) => {
             if (this.audioManager) {
+                this.audioManager.playSound('buttonClick');
                 this.audioManager.soundEnabled = e.target.checked;
             }
             if (this.menu && this.menu.settingsManager) {
@@ -132,8 +139,13 @@ export class PauseMenu {
             }
         });
 
+        els.soundVolume.addEventListener('mouseup', () => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
+        });
+
         els.musicToggle.addEventListener('change', (e) => {
             if (this.audioManager) {
+                this.audioManager.playSound('buttonClick');
                 this.audioManager.musicEnabled = e.target.checked;
 
                 if (e.target.checked) {
@@ -160,6 +172,10 @@ export class PauseMenu {
             if (this.menu && this.menu.settingsManager) {
                 this.menu.settingsManager.saveSettings();
             }
+        });
+
+        els.musicVolume.addEventListener('mouseup', () => {
+            if (this.audioManager) this.audioManager.playSound('buttonClick');
         });
     }
 

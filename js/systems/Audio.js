@@ -24,7 +24,9 @@ export class AudioManager {
             wallHit: 'assets/sounds/wall_hit.mp3',
             goal: 'assets/sounds/goal.mp3',
             powerup: 'assets/sounds/powerup.mp3',
-            gameOver: 'assets/sounds/game_over.mp3'
+            gameOver: 'assets/sounds/game_over.mp3',
+            buttonClick: 'assets/sounds/button_click.mp3',
+            hintAwarded: 'assets/sounds/hintAwarded.mp3'
         };
         this.context = 'menu';
         this.soundFiles = {};

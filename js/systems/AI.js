@@ -70,8 +70,6 @@ export class AI {
 
         while (simBall.x < CONFIG.CANVAS.WIDTH - 100 && steps < maxSteps) {
             planets.forEach(planet => {
-                if (planet.isDisabled) return;
-
                 const dx = planet.x - simBall.x;
                 const dy = planet.y - simBall.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);

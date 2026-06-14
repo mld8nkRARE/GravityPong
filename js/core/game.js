@@ -325,7 +325,7 @@ export class Game {
         this.state = 'gameOver';
         this.winner = winner;
 
-        this.statistics.saveResult(winner, this.lives1, this.lives2, settings.gameMode, settings.difficulty);
+        this.statistics.saveResult(winner, settings.gameMode, settings.difficulty);
         dispatchGameEvent(EVENT_TYPES.GAME_OVER, { winner, lives1: this.lives1, lives2: this.lives2, mode: settings.gameMode });
     }
 

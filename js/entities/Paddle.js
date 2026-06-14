@@ -9,10 +9,7 @@ export class Paddle {
         this.baseHeight = CONFIG.PADDLE.HEIGHT;
         this.speed = CONFIG.PADDLE.SPEED;
         this.isPlayer1 = isPlayer1;
-        this.shape = 'rectangle';
         this.color = isPlayer1 ? CONFIG.PADDLE.COLORS.PLAYER : CONFIG.PADDLE.COLORS.AI;
-
-        this.isEnlarged = false;
         this.enlargeTimer = 0;
     }
 

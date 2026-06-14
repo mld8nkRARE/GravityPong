@@ -21,44 +21,25 @@ export const CONFIG = {
         },
         ENLARGE_MULTIPLIER: 1.85
     },
-    PADDLE_SHAPES: {
-        RECTANGLE: 'rectangle',
-        CONCAVE: 'concave',
-        CONVEX: 'convex',
-        STAR: 'star'
-    },
-    PLANETS: {
-        MIN_COUNT: 2,
-        MAX_COUNT: 7,
-        DEFAULT_COUNT: 3,
-        MIN_RADIUS: 40,
-        MAX_RADIUS: 80,
-        GRAVITY_STRENGTH: 0.4,
-        SPEED: 0.6,
-        COLORS: ['#ff6b9d', '#4ecdc4', '#ffe66d', '#a8e6cf']
-    },
+
     GAME: {
-        MAX_LIVES: 5,
-        FPS: 60
+        MAX_LIVES: 5
     },
     HINTS: {
         FREEZE: {
             duration: 3000,
             uses: 2,
-            cooldown: 15000,
             color: '#00ccff'
         },
         SHIELD: {
             duration: 10000,
             uses: 1,
-            cooldown: 20000,
             color: '#ffaa00'
         },
         ENLARGE: {
             duration: 10000,
             uses: 2,
             multiplier: 1.5,
-            cooldown: 12000,
             color: '#00ff00'
         }
     },

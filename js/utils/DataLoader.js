@@ -1,7 +1,6 @@
 export class DataLoader {
     constructor() {
         this.data = null;
-        this.isLoaded = false;
     }
 
     async loadRules() {
@@ -13,7 +12,6 @@ export class DataLoader {
             }
 
             this.data = await response.json();
-            this.isLoaded = true;
 
             return this.data;
 
@@ -25,20 +23,15 @@ export class DataLoader {
                 rules: [
                     "Управляйте ракеткой с помощью клавиш",
                     "Используйте подсказки для преимущества",
-                    "Побеждает тот, кто первым уничтожит все жизни противника"
+                    "Побеждает тот, кто первым забьет 5 мячей"
                 ]
             };
-            this.isLoaded = true;
             return this.data;
         }
     }
 
     getRules() {
         return this.data;
-    }
-
-    getDescription() {
-        return this.data ? this.data.description : "Описание недоступно";
     }
 
     getRulesList() {

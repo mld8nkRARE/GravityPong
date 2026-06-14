@@ -6,8 +6,6 @@ export class AudioManager {
         this.soundVolume = 0.5;
         this.musicVolume = 0.3;
 
-        this.useSoundFiles = true;
-
         this.menuMusic = new Audio('assets/music/menu.mp3');
         this.gameMusic = new Audio('assets/music/game.mp3');
 

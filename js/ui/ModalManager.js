@@ -10,9 +10,7 @@ export class ModalManager {
         const modalContainer = document.createElement('div');
         modalContainer.innerHTML = html;
         document.body.appendChild(modalContainer);
-
         this.currentModal = modalContainer;
-
         this.attachCloseHandlers(modalContainer, onClose);
     }
 
@@ -74,7 +72,7 @@ export class ModalManager {
         const html = `
             <div id="stats-modal" class="modal-overlay">
                 <div class="modal-content stats-modal">
-                    <h2>📊 Статистика</h2>
+                    <h2>Статистика</h2>
                     
                     <div class="stats-summary">
                         <div>Всего игр: <strong>${winStats.total}</strong></div>
@@ -104,21 +102,18 @@ export class ModalManager {
                 </div>
             </div>`;
 
-        this.show(html, () => {
-        });
+        this.show(html);
 
-        setTimeout(() => {
-            const clearBtn = document.getElementById('stats-clear');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', () => {
-                    if (this.audioManager) this.audioManager.playSound('buttonClick');
-                    if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
-                        statistics.clearAll();
-                        this.close();
-                        setTimeout(() => this.showStatistics(statistics, onClear), 150);
-                    }
-                });
-            }
-        }, 100);
+        const clearBtn = document.getElementById('stats-clear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (this.audioManager) this.audioManager.playSound('buttonClick');
+                if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
+                    statistics.clearAll();
+                    this.close();
+                    setTimeout(() => this.showStatistics(statistics, onClear), 150);
+                }
+            });
+        }
     }
 }

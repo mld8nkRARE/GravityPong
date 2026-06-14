@@ -1,9 +1,8 @@
-import { CONFIG } from '../core/config.js';
 import { settings } from '../core/settings.js';
 
 export class Statistics {
     constructor() {
-        this.key = 'gravityPongStats';
+        this.key = 'shav_gravityPongStats';
         this.history = this.loadHistory();
     }
 
@@ -22,12 +21,10 @@ export class Statistics {
         } catch (e) { }
     }
 
-    saveResult(winner, lives1, lives2, mode, difficulty = null) {
+    saveResult(winner, mode, difficulty = null) {
         const result = {
             date: new Date().toISOString(),
             winner: winner,
-            score1: CONFIG.GAME.MAX_LIVES - lives1,
-            score2: CONFIG.GAME.MAX_LIVES - lives2,
             mode: mode,
             difficulty: difficulty || settings.difficulty || '—',
             duration: Math.floor((Date.now() - (window.gameStartTime || Date.now())) / 1000)

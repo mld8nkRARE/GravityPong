@@ -2,7 +2,7 @@ import { settings } from '../core/settings.js';
 
 export class SettingsManager {
     constructor(audioManager) {
-        this.key = 'gravityPongSettings';
+        this.key = 'shav_gravityPongSettings';
         this.audioManager = audioManager;
         this.loadSettings();
     }
@@ -42,8 +42,8 @@ export class SettingsManager {
                 planetCount: settings.planetCount,
                 speedIncrease: settings.speedIncrease,
                 showHints: settings.showHints,
-                soundEnabled: !!audio.soundEnabled,
-                musicEnabled: !!audio.musicEnabled,
+                soundEnabled: audio.soundEnabled ?? true,
+                musicEnabled: audio.musicEnabled ?? true,
                 soundVolume: audio.soundVolume ?? 0.5,
                 musicVolume: audio.musicVolume ?? 0.3
             };

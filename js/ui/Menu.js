@@ -3,6 +3,7 @@
 class Menu {
   constructor() {
     this.dataLoader = new DataLoader();
+    this.settingsManager = new SettingsManager();
     this.statistics = window.gameStatistics;
     this.createMenuHTML();
     this.attachEventListeners();
@@ -205,12 +206,14 @@ class Menu {
     document.getElementById('planet-count').addEventListener('input', (e) => {
       SETTINGS.planetCount = parseInt(e.target.value);
       document.getElementById('planet-count-value').textContent = e.target.value;
+      this.settingsManager.saveSettings();
     });
 
     document.getElementById('speed-increase').addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
       SETTINGS.speedIncrease = 1 + val / 100;
       document.getElementById('speed-increase-value').textContent = `+${val}%`;
+      this.settingsManager.saveSettings();
     });
 
     // Звуковые настройки
@@ -218,6 +221,7 @@ class Menu {
       if (window.audioManager) {
         window.audioManager.toggleSound();
       }
+      this.settingsManager.saveSettings();
     });
 
     document.getElementById('sound-volume').addEventListener('input', (e) => {
@@ -226,12 +230,14 @@ class Menu {
       if (window.audioManager) {
         window.audioManager.setSoundVolume(value / 100);
       }
+      this.settingsManager.saveSettings();
     });
 
     document.getElementById('music-toggle').addEventListener('change', (e) => {
       if (window.audioManager) {
         window.audioManager.toggleMusic();
       }
+      this.settingsManager.saveSettings();
     });
 
     document.getElementById('music-volume').addEventListener('input', (e) => {
@@ -240,6 +246,7 @@ class Menu {
       if (window.audioManager) {
         window.audioManager.setMusicVolume(value / 100);
       }
+      this.settingsManager.saveSettings();
     });
   }
 
@@ -256,6 +263,10 @@ class Menu {
     if (targetScreen) {
       targetScreen.classList.add('active');
       targetScreen.style.display = 'flex';
+      // Синхронизируем настройки при открытии экрана настроек
+      if (screenId === 'settings-menu') {
+        this.syncSettingsUI();
+      }
     } else {
       // Fallback на главное меню
       const mainMenu = document.getElementById('main-menu');
@@ -387,6 +398,36 @@ class Menu {
         setTimeout(() => this.showStatistics(), 100);
       }
     });
+  }
+  syncSettingsUI() {
+    // Планеты
+    const planetSlider = document.getElementById('planet-count');
+    if (planetSlider) {
+      planetSlider.value = SETTINGS.planetCount;
+      document.getElementById('planet-count-value').textContent = SETTINGS.planetCount;
+    }
+
+    // Ускорение
+    const speedSlider = document.getElementById('speed-increase');
+    if (speedSlider) {
+      const percent = Math.round((SETTINGS.speedIncrease - 1) * 100);
+      speedSlider.value = percent;
+      document.getElementById('speed-increase-value').textContent = `+${percent}%`;
+    }
+
+    // Громкость
+    if (window.audioManager) {
+      const soundVol = document.getElementById('sound-volume');
+      const musicVol = document.getElementById('music-volume');
+      if (soundVol) {
+        soundVol.value = Math.round(window.audioManager.soundVolume * 100);
+        document.getElementById('sound-volume-value').textContent = `${Math.round(window.audioManager.soundVolume * 100)}%`;
+      }
+      if (musicVol) {
+        musicVol.value = Math.round(window.audioManager.musicVolume * 100);
+        document.getElementById('music-volume-value').textContent = `${Math.round(window.audioManager.musicVolume * 100)}%`;
+      }
+    }
   }
 }
 

@@ -108,6 +108,9 @@ class PauseMenu {
             document.getElementById('pause-sound-volume-value').textContent = `${value}%`;
             if (window.audioManager) {
                 window.audioManager.setSoundVolume(value / 100);
+                if (window.menu && window.menu.settingsManager) {
+                    window.menu.settingsManager.saveSettings();
+                }
             }
         });
 
@@ -137,6 +140,9 @@ class PauseMenu {
             document.getElementById('pause-music-volume-value').textContent = `${value}%`;
             if (window.audioManager) {
                 window.audioManager.setMusicVolume(value / 100);
+                if (window.menu && window.menu.settingsManager) {
+                    window.menu.settingsManager.saveSettings();
+                }
             }
         });
     }

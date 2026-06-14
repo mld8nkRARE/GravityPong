@@ -42,6 +42,29 @@ export class Game {
     handleGameEvent(type, data) {
         switch (type) {
             case EVENT_TYPES.GOAL:
+                if (this.hintSystem.checkShield(data.scorer, this.ball)) break;
+
+                let awardedHint = null;
+
+                if (data.scorer === 'player1') {
+                    this.lives2--;
+                    this.ball.reset(1);
+                    awardedHint = this.hintSystem.hintManager1.onGoalScored();
+                    this.hintSystem.hintManager2.onGoalConceded();
+                } else {
+                    this.lives1--;
+                    this.ball.reset(-1);
+                    this.hintSystem.hintManager1.onGoalConceded();
+                    if (settings.gameMode === 'PVP') {
+                        awardedHint = this.hintSystem.hintManager2.onGoalScored();
+                    }
+                }
+
+                if (awardedHint) this.showHintAward(data.scorer, awardedHint);
+
+                if (this.lives1 <= 0) this.gameOver('player2');
+                else if (this.lives2 <= 0) this.gameOver('player1');
+
                 if (this.audioManager) this.audioManager.playSound('goal');
                 break;
 
@@ -50,6 +73,9 @@ export class Game {
                 break;
 
             case EVENT_TYPES.HINT_AWARDED:
+                const hintNames = { freeze: 'Заморозка', shield: 'Щит', enlarge: 'Увеличение' };
+                const color = data.player === 'player1' ? CONFIG.PADDLE.COLORS.PLAYER : CONFIG.PADDLE.COLORS.AI;
+                this.renderer.drawHintAward(hintNames[data.hintType], color);
                 if (this.audioManager) this.audioManager.playSound('hintAwarded');
                 break;
 
@@ -279,46 +305,10 @@ export class Game {
 
     handleGoal(scorer) {
         dispatchGameEvent(EVENT_TYPES.GOAL, { scorer, lives1: this.lives1, lives2: this.lives2 });
-
-        if (this.hintSystem.checkShield(scorer, this.ball)) {
-            return;
-        }
-
-        let awardedHint = null;
-
-        if (scorer === 'player1') {
-            this.lives2--;
-            this.ball.reset(1);
-            awardedHint = this.hintSystem.hintManager1.onGoalScored();
-            this.hintSystem.hintManager2.onGoalConceded();
-        } else {
-            this.lives1--;
-            this.ball.reset(-1);
-            this.hintSystem.hintManager1.onGoalConceded();
-            if (settings.gameMode === 'PVP') {
-                awardedHint = this.hintSystem.hintManager2.onGoalScored();
-            }
-        }
-
-        if (awardedHint) {
-            this.showHintAward(scorer, awardedHint);
-        }
-
-        if (this.lives1 <= 0) this.gameOver('player2');
-        else if (this.lives2 <= 0) this.gameOver('player1');
     }
 
     showHintAward(player, hintType) {
-        const hintNames = {
-            freeze: 'Заморозка',
-            shield: 'Щит',
-            enlarge: 'Увеличение'
-        };
-
-        const color = player === 'player1' ? CONFIG.PADDLE.COLORS.PLAYER : CONFIG.PADDLE.COLORS.AI;
-
         dispatchGameEvent(EVENT_TYPES.HINT_AWARDED, { player, hintType });
-        this.renderer.drawHintAward(hintNames[hintType], color);
     }
 
     gameOver(winner) {

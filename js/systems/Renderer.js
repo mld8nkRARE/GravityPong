@@ -238,4 +238,22 @@ export class Renderer {
 
         this.ctx.textAlign = 'left';
     }
+
+    drawHintAward(hintName) {
+        const ctx = this.ctx;
+        const x = this.canvas.width / 2;
+        const y = 100;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = '#00ff88';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00ff88';
+        ctx.fillText(`+1 ${hintName}`, x, y);
+
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
 }

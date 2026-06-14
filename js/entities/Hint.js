@@ -20,6 +20,10 @@ export class HintManager {
             shield: 0,
             enlarge: 0
         };
+
+        this.consecutiveGoals = 0;
+        this.lastGoalTime = Date.now();
+        this.lastRewardTime = Date.now();
     }
 
     canUse(hintType) {
@@ -36,6 +40,40 @@ export class HintManager {
         this.timers[hintType] = duration / (1000 / CONFIG.GAME.FPS);
 
         return true;
+    }
+
+    addRandomHint() {
+        const types = ['freeze', 'shield', 'enlarge'];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        this.hints[randomType]++;
+        return randomType;
+    }
+
+    onGoalScored() {
+        this.consecutiveGoals++;
+        this.lastGoalTime = Date.now();
+
+        if (this.consecutiveGoals >= 2) {
+            this.consecutiveGoals = 0;
+            return this.addRandomHint();
+        }
+        return null;
+    }
+
+    onGoalConceded() {
+        this.consecutiveGoals = 0;
+        this.lastGoalTime = Date.now();
+    }
+
+    checkSurvivalReward() {
+        const now = Date.now();
+        const survivalTime = now - this.lastGoalTime;
+
+        if (survivalTime >= 30000 && (now - this.lastRewardTime) >= 30000) {
+            this.lastRewardTime = now;
+            return this.addRandomHint();
+        }
+        return null;
     }
 
     update() {
@@ -67,5 +105,9 @@ export class HintManager {
             shield: false,
             enlarge: false
         };
+
+        this.consecutiveGoals = 0;
+        this.lastGoalTime = Date.now();
+        this.lastRewardTime = Date.now();
     }
 }

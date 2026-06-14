@@ -143,6 +143,20 @@ export class Game {
 
         const goal = Physics.checkGoal(this.ball);
         if (goal) this.handleGoal(goal);
+
+        this.checkSurvivalRewards();
+    }
+
+    checkSurvivalRewards() {
+        const hint1Reward = this.hintSystem.hintManager1.checkSurvivalReward();
+        if (hint1Reward) {
+            this.showHintAward('player1', hint1Reward);
+        }
+
+        const hint2Reward = this.hintSystem.hintManager2.checkSurvivalReward();
+        if (hint2Reward) {
+            this.showHintAward('player2', hint2Reward);
+        }
     }
 
     draw() {
@@ -224,16 +238,38 @@ export class Game {
             return;
         }
 
+        let awardedHint = null;
+
         if (scorer === 'player1') {
             this.lives2--;
             this.ball.reset(1);
+            awardedHint = this.hintSystem.hintManager1.onGoalScored();
+            this.hintSystem.hintManager2.onGoalConceded();
         } else {
             this.lives1--;
             this.ball.reset(-1);
+            awardedHint = this.hintSystem.hintManager2.onGoalScored();
+            this.hintSystem.hintManager1.onGoalConceded();
+        }
+
+        if (awardedHint) {
+            this.showHintAward(scorer, awardedHint);
         }
 
         if (this.lives1 <= 0) this.gameOver('player2');
         else if (this.lives2 <= 0) this.gameOver('player1');
+    }
+
+    showHintAward(player, hintType) {
+        const hintNames = {
+            freeze: 'Заморозка',
+            shield: 'Щит',
+            enlarge: 'Увеличение'
+        };
+
+        this.renderer.drawHintAward(hintNames[hintType]);
+
+        if (this.audioManager) this.audioManager.playSound('powerup');
     }
 
     gameOver(winner) {

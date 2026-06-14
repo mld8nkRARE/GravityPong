@@ -1,6 +1,7 @@
-// js/utils/Statistics.js
+import { CONFIG } from '../core/config.js';
+import { settings } from '../core/settings.js';
 
-class Statistics {
+export class Statistics {
     constructor() {
         this.key = 'gravityPongStats';
         this.history = this.loadHistory();
@@ -25,10 +26,10 @@ class Statistics {
         const result = {
             date: new Date().toISOString(),
             winner: winner,
-            score1: CONFIG.GAME.MAX_LIVES - lives1,  // сколько жизней осталось у победителя
+            score1: CONFIG.GAME.MAX_LIVES - lives1,
             score2: CONFIG.GAME.MAX_LIVES - lives2,
             mode: mode,
-            difficulty: difficulty || SETTINGS.difficulty || '—',
+            difficulty: difficulty || settings.difficulty || '—',
             duration: Math.floor((Date.now() - (window.gameStartTime || Date.now())) / 1000)
         };
 
@@ -36,7 +37,6 @@ class Statistics {
         if (this.history.length > 30) this.history.pop();
 
         this.saveHistory();
-        console.log('📊 Результат сохранён:', result);
     }
 
     getHistory() {
@@ -54,13 +54,7 @@ class Statistics {
     clearAll() {
         this.history = [];
         localStorage.removeItem(this.key);
-        console.log('🗑️ Статистика полностью очищена');
     }
 }
 
-// Делаем один экземпляр на всю игру
-if (!window.gameStatistics) {
-    window.gameStatistics = new Statistics();
-}
-
-window.Statistics = Statistics;
+export const statistics = new Statistics();

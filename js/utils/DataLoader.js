@@ -1,6 +1,4 @@
-// js/utils/DataLoader.js
-
-class DataLoader {
+export class DataLoader {
     constructor() {
         this.data = null;
         this.isLoaded = false;
@@ -8,8 +6,7 @@ class DataLoader {
 
     async loadRules() {
         try {
-            // Можно использовать относительный путь или абсолютный
-            const response = await fetch('/assets/data/rules.json');
+            const response = await fetch('assets/data/rules.json');
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -18,13 +15,9 @@ class DataLoader {
             this.data = await response.json();
             this.isLoaded = true;
 
-            console.log('Правила игры успешно загружены:', this.data);
             return this.data;
 
         } catch (error) {
-            console.warn('Не удалось загрузить rules.json, используем локальные данные', error);
-
-            // Fallback — локальные данные
             this.data = {
                 gameTitle: "GRAVITY PONG",
                 version: "1.0",
@@ -52,6 +45,3 @@ class DataLoader {
         return this.data && this.data.rules ? this.data.rules : [];
     }
 }
-
-// Глобально
-window.DataLoader = DataLoader;

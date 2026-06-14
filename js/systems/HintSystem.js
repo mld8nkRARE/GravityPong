@@ -1,6 +1,8 @@
-// js/systems/HintSystem.js
+import { CONFIG } from '../core/config.js';
+import { HintManager } from '../entities/Hint.js';
+import { dispatchGameEvent, EVENT_TYPES } from '../core/events.js';
 
-class HintSystem {
+export class HintSystem {
     constructor() {
         this.hintManager1 = new HintManager('player1');
         this.hintManager2 = new HintManager('player2');
@@ -11,19 +13,18 @@ class HintSystem {
         this.hintManager2.update();
     }
 
-    activate(player, type) {
+    activate(player, type, audioManager) {
         const manager = player === 'player1' ? this.hintManager1 : this.hintManager2;
         if (!manager.activate(type)) return false;
 
-        // Отправляем событие
         dispatchGameEvent(EVENT_TYPES.HINT_USED, {
             player,
             hintType: type,
             remainingUses: manager.hints[type]
         });
 
-        if (window.audioManager) {
-            window.audioManager.playSound('powerup');
+        if (audioManager) {
+            audioManager.playSound('powerup');
         }
 
         return true;
@@ -33,18 +34,15 @@ class HintSystem {
         return player === 'player1' ? this.hintManager1 : this.hintManager2;
     }
 
-    // Применение эффектов
-    applyEffect(player, type, game) {
+    applyEffect(player, type, ball, paddle) {
         if (type === 'freeze') {
-            this.applyFreeze(game);
+            this.applyFreeze(ball);
         } else if (type === 'enlarge') {
-            this.applyEnlarge(player, game);
+            this.applyEnlarge(paddle);
         }
-        // shield применяется не сразу, а при получении гола (см. handleGoal)
     }
 
-    applyFreeze(game) {
-        const ball = game.ball;
+    applyFreeze(ball) {
         if (!ball) return;
 
         ball.velocityX *= 0.3;
@@ -53,7 +51,7 @@ class HintSystem {
         ball.isFrozen = true;
 
         setTimeout(() => {
-            if (ball && game.isRunning) {
+            if (ball) {
                 const currentSpeed = Math.sqrt(ball.velocityX ** 2 + ball.velocityY ** 2);
                 const minSpeed = 3;
                 const scale = currentSpeed > 0 ? minSpeed / currentSpeed : 1;
@@ -66,23 +64,21 @@ class HintSystem {
         }, CONFIG.HINTS.FREEZE.duration);
     }
 
-    applyEnlarge(player, game) {
-        const paddle = player === 'player1' ? game.paddle1 : game.paddle2;
-        if (typeof paddle.activateEnlarge === 'function') {
+    applyEnlarge(paddle) {
+        if (paddle && typeof paddle.activateEnlarge === 'function') {
             paddle.activateEnlarge();
         }
     }
 
-    // Проверка щита при голе
-    checkShield(scorer, game) {
+    checkShield(scorer, ball) {
         if (scorer === 'player2' && this.hintManager1.activeEffects.shield) {
             this.hintManager1.activeEffects.shield = false;
-            game.ball.reset(-1);
+            ball.reset(-1);
             return true;
         }
         if (scorer === 'player1' && this.hintManager2.activeEffects.shield) {
             this.hintManager2.activeEffects.shield = false;
-            game.ball.reset(1);
+            ball.reset(1);
             return true;
         }
         return false;
@@ -97,10 +93,9 @@ class HintSystem {
         renderer.drawHints(this.hintManager1, true);
         renderer.drawHints(this.hintManager2, false);
     }
+
     isFreezeActive() {
         return this.hintManager1.activeEffects.freeze ||
             this.hintManager2.activeEffects.freeze;
     }
 }
-
-window.HintSystem = HintSystem;

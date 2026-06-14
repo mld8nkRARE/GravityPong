@@ -1,6 +1,4 @@
-// js/utils/AudioManager.js
-
-class AudioManager {
+export class AudioManager {
     constructor() {
         this.soundEnabled = true;
         this.musicEnabled = true;
@@ -10,7 +8,6 @@ class AudioManager {
 
         this.useSoundFiles = true;
 
-        // -------- МУЗЫКА --------
         this.menuMusic = new Audio('assets/music/menu.mp3');
         this.gameMusic = new Audio('assets/music/game.mp3');
 
@@ -22,7 +19,6 @@ class AudioManager {
 
         this.currentMusic = null;
 
-        // -------- ЗВУКИ --------
         this.soundPaths = {
             paddleHit: 'assets/sounds/paddle_hit.mp3',
             wallHit: 'assets/sounds/wall_hit.mp3',
@@ -44,19 +40,11 @@ class AudioManager {
         });
     }
 
-    // ============================
-    // 🎵 МУЗЫКА
-    // ============================
-
-
     playMenuMusic() {
         this.context = 'menu';
 
-        //if (!this.musicEnabled) return;
-
         this.stopMusic();
         if (!this.musicEnabled) {
-            // Музыка выключена, но контекст установлен
             return;
         }
         this.menuMusic.currentTime = 0;
@@ -91,7 +79,6 @@ class AudioManager {
         if (!this.musicEnabled) {
             this.stopMusic();
         } else {
-            // ✅ ВАЖНО: запускаем музыку в зависимости от текущего контекста
             if (this.context === 'game') {
                 this.playGameMusic();
             } else {
@@ -108,10 +95,6 @@ class AudioManager {
         this.menuMusic.volume = this.musicVolume;
         this.gameMusic.volume = this.musicVolume;
     }
-
-    // ============================
-    // 🔊 ЗВУКИ
-    // ============================
 
     playSound(name) {
         if (!this.soundEnabled) return;
@@ -131,5 +114,3 @@ class AudioManager {
         return this.soundEnabled;
     }
 }
-
-window.AudioManager = AudioManager;

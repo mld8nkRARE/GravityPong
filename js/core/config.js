@@ -1,7 +1,4 @@
-// js/config.js
-
-const CONFIG = {
-    // Настройки canvas
+export const CONFIG = {
     CANVAS: {
         WIDTH: 1200,
         HEIGHT: 700
@@ -10,31 +7,26 @@ const CONFIG = {
         RADIUS: 8,
         INITIAL_SPEED: 8,
         MIN_SPEED: 8,
-        MAX_SPEED: 25,  // Уменьшили с 15
+        MAX_SPEED: 25,
         TRAIL_LENGTH: 10
     },
-
-    // Настройки ракетки
     PADDLE: {
         WIDTH: 15,
         HEIGHT: 100,
         SPEED: 8,
-        OFFSET: 50,  // Отступ от края
+        OFFSET: 50,
         COLORS: {
             PLAYER: '#00ff88',
             AI: '#ff4466'
-        }
+        },
+        ENLARGE_MULTIPLIER: 1.85
     },
-
-    // Формы ракеток
     PADDLE_SHAPES: {
         RECTANGLE: 'rectangle',
         CONCAVE: 'concave',
         CONVEX: 'convex',
         STAR: 'star'
     },
-
-    // Настройки планет
     PLANETS: {
         MIN_COUNT: 2,
         MAX_COUNT: 7,
@@ -42,20 +34,16 @@ const CONFIG = {
         MIN_RADIUS: 40,
         MAX_RADIUS: 80,
         GRAVITY_STRENGTH: 0.4,
-        SPEED: 0.6,  // Скорость движения
+        SPEED: 0.6,
         COLORS: ['#ff6b9d', '#4ecdc4', '#ffe66d', '#a8e6cf']
     },
-
-    // Настройки игры
     GAME: {
         MAX_LIVES: 5,
         FPS: 60
     },
-
-    // Подсказки
     HINTS: {
         FREEZE: {
-            duration: 3000,  // мс
+            duration: 3000,
             uses: 2,
             cooldown: 15000,
             color: '#00ccff'
@@ -74,12 +62,10 @@ const CONFIG = {
             color: '#00ff00'
         }
     },
-
-    // AI сложности
     AI_DIFFICULTY: {
         EASY: {
             speed: 3,
-            reactionDelay: 15,  // кадры
+            reactionDelay: 15,
             accuracy: 0.7,
             predictTrajectory: false
         },
@@ -96,8 +82,6 @@ const CONFIG = {
             predictTrajectory: true
         }
     },
-
-    // Управление
     CONTROLS: {
         PLAYER1: {
             UP: 'KeyW',
@@ -114,16 +98,4 @@ const CONFIG = {
             HINT3: 'Digit9'
         }
     }
-};
-
-// Глобальные настройки игры (изменяемые из меню)
-const SETTINGS = {
-    gameMode: 'AI',  // 'AI' или 'PVP'
-    difficulty: 'MEDIUM',
-    planetCount: 3,
-    speedIncrease: 1.05,
-    speedIncreasePercent: 5,
-    player1Shape: 'rectangle',
-    player2Shape: 'rectangle',
-    showHints: true
 };

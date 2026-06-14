@@ -1,32 +1,41 @@
-// js/ui/Menu.js
+import { settings } from '../core/settings.js';
+import { DataLoader } from '../utils/DataLoader.js';
+import { SettingsManager } from '../utils/SettingsManager.js';
+import { ModalManager } from './ModalManager.js';
+import { ScreenManager } from './ScreenManager.js';
 
-class Menu {
-  constructor() {
-    this.dataLoader = new DataLoader();
-    this.settingsManager = new SettingsManager();
-    this.statistics = window.gameStatistics;
-    this.modalManager = new ModalManager();
-    this.screenManager = new ScreenManager();
-    this.createMenuHTML();
-    this.screenManager.init();
-    this.attachEventListeners();
-    this.loadGameData();
-  }
+export class Menu {
+    constructor(audioManager, statistics) {
+        this.audioManager = audioManager;
+        this.statistics = statistics;
+        this.game = null;
+        this.dataLoader = new DataLoader();
+        this.settingsManager = new SettingsManager(audioManager);
+        this.modalManager = new ModalManager();
+        this.screenManager = new ScreenManager();
+        this.createMenuHTML();
+        this.screenManager.init();
+        this.attachEventListeners();
+        this.loadGameData();
+    }
 
-  // ====================== СОЗДАНИЕ HTML ======================
-  createMenuHTML() {
-    const menuContainer = document.getElementById('menu');
-    menuContainer.innerHTML = `
+    setGame(game) {
+        this.game = game;
+    }
+
+    createMenuHTML() {
+        const menuContainer = document.getElementById('menu');
+        menuContainer.innerHTML = `
             ${this.getMainMenuHTML()}
             ${this.getModeMenuHTML()}
             ${this.getDifficultyMenuHTML()}
             ${this.getSettingsMenuHTML()}
             ${this.getControlsMenuHTML()}
         `;
-  }
+    }
 
-  getMainMenuHTML() {
-    return `
+    getMainMenuHTML() {
+        return `
             <div id="main-menu" class="menu-screen active">
                 <h1 class="game-title">GRAVITY PONG</h1>
                 <div class="menu-buttons">
@@ -37,10 +46,10 @@ class Menu {
                     <button class="menu-btn" id="btn-controls">Управление</button>
                 </div>
             </div>`;
-  }
+    }
 
-  getModeMenuHTML() {
-    return `
+    getModeMenuHTML() {
+        return `
             <div id="mode-menu" class="menu-screen">
                 <h2>Выбор режима</h2>
                 <div class="mode-selection">
@@ -57,10 +66,10 @@ class Menu {
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-mode">Назад</button>
             </div>`;
-  }
+    }
 
-  getDifficultyMenuHTML() {
-    return `
+    getDifficultyMenuHTML() {
+        return `
             <div id="difficulty-menu" class="menu-screen">
                 <h2>Выбор сложности</h2>
                 <div class="difficulty-selection">
@@ -82,10 +91,10 @@ class Menu {
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-difficulty">Назад</button>
             </div>`;
-  }
+    }
 
-  getSettingsMenuHTML() {
-    return `
+    getSettingsMenuHTML() {
+        return `
             <div id="settings-menu" class="menu-screen">
                 <h2>Настройки</h2>
                 <div class="settings-container">
@@ -133,10 +142,10 @@ class Menu {
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-settings">Назад</button>
             </div>`;
-  }
+    }
 
-  getControlsMenuHTML() {
-    return `
+    getControlsMenuHTML() {
+        return `
             <div id="controls-menu" class="menu-screen">
                 <h2>Управление</h2>
                 <div class="controls-container">
@@ -159,177 +168,173 @@ class Menu {
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-controls">Назад</button>
             </div>`;
-  }
-  attachEventListeners() {
-    this.attachMainMenuListeners();
-    this.attachModeAndDifficultyListeners();
-    this.attachSettingsListeners();
-    this.attachBackButtons();
-  }
-  attachMainMenuListeners() {
-    document.getElementById('btn-play').addEventListener('click', () => this.showScreen('mode-menu'));
-    document.getElementById('btn-howtoplay').addEventListener('click', () => this.showHowToPlay());
-    document.getElementById('btn-stats').addEventListener('click', () => this.showStatistics());
-    document.getElementById('btn-settings').addEventListener('click', () => this.showScreen('settings-menu'));
-    document.getElementById('btn-controls').addEventListener('click', () => this.showScreen('controls-menu'));
-  }
-  attachModeAndDifficultyListeners() {
-    // Mode cards
-    document.querySelectorAll('.mode-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        SETTINGS.gameMode = card.dataset.mode;
-
-        setTimeout(() => {
-          if (SETTINGS.gameMode === 'AI') {
-            this.showScreen('difficulty-menu');
-          } else {
-            this.startGame();
-          }
-        }, 150);
-      });
-    });
-
-    // Difficulty cards
-    document.querySelectorAll('.difficulty-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.difficulty-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        SETTINGS.difficulty = card.dataset.difficulty;
-        setTimeout(() => this.startGame(), 150);
-      });
-    });
-  }
-  attachSettingsListeners() {
-    // Планеты
-    document.getElementById('planet-count').addEventListener('input', (e) => {
-      SETTINGS.planetCount = parseInt(e.target.value);
-      document.getElementById('planet-count-value').textContent = e.target.value;
-      this.settingsManager.saveSettings();
-    });
-
-    // Ускорение
-    document.getElementById('speed-increase').addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      SETTINGS.speedIncrease = 1 + val / 100;
-      document.getElementById('speed-increase-value').textContent = `+${val}%`;
-      this.settingsManager.saveSettings();
-    });
-
-    // Звуковые настройки
-    document.getElementById('sound-volume').addEventListener('input', (e) => {
-      const value = parseInt(e.target.value) / 100;
-      document.getElementById('sound-volume-value').textContent = `${parseInt(e.target.value)}%`;
-      if (window.audioManager) window.audioManager.setSoundVolume(value);
-      this.settingsManager.saveSettings();
-    });
-
-    document.getElementById('music-volume').addEventListener('input', (e) => {
-      const value = parseInt(e.target.value) / 100;
-      document.getElementById('music-volume-value').textContent = `${parseInt(e.target.value)}%`;
-      if (window.audioManager) window.audioManager.setMusicVolume(value);
-      this.settingsManager.saveSettings();
-    });
-
-    document.getElementById('sound-toggle').addEventListener('change', (e) => {
-      if (window.audioManager) window.audioManager.toggleSound();
-      this.settingsManager.saveSettings();
-    });
-
-    document.getElementById('music-toggle').addEventListener('change', (e) => {
-      if (window.audioManager) window.audioManager.toggleMusic();
-      this.settingsManager.saveSettings();
-    });
-  }
-  attachBackButtons() {
-    document.querySelectorAll('.back-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.id;
-        if (id === 'btn-back-mode') this.showScreen('main-menu');
-        else if (id === 'btn-back-difficulty') this.showScreen('mode-menu');
-        else this.showScreen('main-menu');
-      });
-    });
-  }
-  // ====================== НАВИГАЦИЯ ======================
-  showScreen(screenId) {
-    this.screenManager.show(screenId);
-
-    if (screenId === 'settings-menu') {
-      this.syncSettingsUI();
-    }
-  }
-  // ====================== ОСНОВНЫЕ ДЕЙСТВИЯ ======================
-  startGame() {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('gameCanvas').style.display = 'block';
-
-    if (window.audioManager) {
-      window.audioManager.playGameMusic();
     }
 
-    if (window.game) {
-      window.game.stop();
-      window.game.init();
-      window.game.start();
-    }
-  }
-
-  async loadGameData() {
-    const data = await this.dataLoader.loadRules();
-    console.log('📋 Загружены данные игры:', data);
-  }
-
-  show() {
-    document.getElementById('menu').style.display = 'flex';
-    this.showScreen('main-menu');
-  }
-  // ====================== МОДАЛЬНЫЕ ОКНА ======================
-  showHowToPlay() {
-    this.modalManager.showHowToPlay(this.dataLoader);
-  }
-
-  showStatistics() {
-    this.modalManager.showStatistics(this.statistics);
-  }
-  syncSettingsUI() {
-    // Планеты и ускорение
-    const planetSlider = document.getElementById('planet-count');
-    if (planetSlider) {
-      planetSlider.value = SETTINGS.planetCount;
-      document.getElementById('planet-count-value').textContent = SETTINGS.planetCount;
+    attachEventListeners() {
+        this.attachMainMenuListeners();
+        this.attachModeAndDifficultyListeners();
+        this.attachSettingsListeners();
+        this.attachBackButtons();
     }
 
-    const speedSlider = document.getElementById('speed-increase');
-    if (speedSlider) {
-      const percent = Math.round((SETTINGS.speedIncrease - 1) * 100);
-      speedSlider.value = percent;
-      document.getElementById('speed-increase-value').textContent = `+${percent}%`;
+    attachMainMenuListeners() {
+        document.getElementById('btn-play').addEventListener('click', () => this.showScreen('mode-menu'));
+        document.getElementById('btn-howtoplay').addEventListener('click', () => this.showHowToPlay());
+        document.getElementById('btn-stats').addEventListener('click', () => this.showStatistics());
+        document.getElementById('btn-settings').addEventListener('click', () => this.showScreen('settings-menu'));
+        document.getElementById('btn-controls').addEventListener('click', () => this.showScreen('controls-menu'));
     }
 
-    // Чекбоксы и громкость
-    if (window.audioManager) {
-      const soundToggle = document.getElementById('sound-toggle');
-      const musicToggle = document.getElementById('music-toggle');
-      const soundVolume = document.getElementById('sound-volume');
-      const musicVolume = document.getElementById('music-volume');
+    attachModeAndDifficultyListeners() {
+        document.querySelectorAll('.mode-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                settings.gameMode = card.dataset.mode;
 
-      if (soundToggle) soundToggle.checked = !!window.audioManager.soundEnabled;
-      if (musicToggle) musicToggle.checked = !!window.audioManager.musicEnabled;
+                setTimeout(() => {
+                    if (settings.gameMode === 'AI') {
+                        this.showScreen('difficulty-menu');
+                    } else {
+                        this.startGame();
+                    }
+                }, 150);
+            });
+        });
 
-      if (soundVolume) {
-        soundVolume.value = Math.round(window.audioManager.soundVolume * 100);
-        document.getElementById('sound-volume-value').textContent =
-          `${Math.round(window.audioManager.soundVolume * 100)}%`;
-      }
-      if (musicVolume) {
-        musicVolume.value = Math.round(window.audioManager.musicVolume * 100);
-        document.getElementById('music-volume-value').textContent =
-          `${Math.round(window.audioManager.musicVolume * 100)}%`;
-      }
+        document.querySelectorAll('.difficulty-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.difficulty-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                settings.difficulty = card.dataset.difficulty;
+                setTimeout(() => this.startGame(), 150);
+            });
+        });
     }
-  }
+
+    attachSettingsListeners() {
+        document.getElementById('planet-count').addEventListener('input', (e) => {
+            settings.planetCount = parseInt(e.target.value);
+            document.getElementById('planet-count-value').textContent = e.target.value;
+            this.settingsManager.saveSettings();
+        });
+
+        document.getElementById('speed-increase').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            settings.speedIncrease = 1 + val / 100;
+            document.getElementById('speed-increase-value').textContent = `+${val}%`;
+            this.settingsManager.saveSettings();
+        });
+
+        document.getElementById('sound-volume').addEventListener('input', (e) => {
+            const value = parseInt(e.target.value) / 100;
+            document.getElementById('sound-volume-value').textContent = `${parseInt(e.target.value)}%`;
+            if (this.audioManager) this.audioManager.setSoundVolume(value);
+            this.settingsManager.saveSettings();
+        });
+
+        document.getElementById('music-volume').addEventListener('input', (e) => {
+            const value = parseInt(e.target.value) / 100;
+            document.getElementById('music-volume-value').textContent = `${parseInt(e.target.value)}%`;
+            if (this.audioManager) this.audioManager.setMusicVolume(value);
+            this.settingsManager.saveSettings();
+        });
+
+        document.getElementById('sound-toggle').addEventListener('change', (e) => {
+            if (this.audioManager) this.audioManager.toggleSound();
+            this.settingsManager.saveSettings();
+        });
+
+        document.getElementById('music-toggle').addEventListener('change', (e) => {
+            if (this.audioManager) this.audioManager.toggleMusic();
+            this.settingsManager.saveSettings();
+        });
+    }
+
+    attachBackButtons() {
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.id;
+                if (id === 'btn-back-mode') this.showScreen('main-menu');
+                else if (id === 'btn-back-difficulty') this.showScreen('mode-menu');
+                else this.showScreen('main-menu');
+            });
+        });
+    }
+
+    showScreen(screenId) {
+        this.screenManager.show(screenId);
+
+        if (screenId === 'settings-menu') {
+            this.syncSettingsUI();
+        }
+    }
+
+    startGame() {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('gameCanvas').style.display = 'block';
+
+        if (this.audioManager) {
+            this.audioManager.playGameMusic();
+        }
+
+        if (this.game) {
+            this.game.stop();
+            this.game.init();
+            this.game.start();
+        }
+    }
+
+    async loadGameData() {
+        await this.dataLoader.loadRules();
+    }
+
+    show() {
+        document.getElementById('menu').style.display = 'flex';
+        this.showScreen('main-menu');
+    }
+
+    showHowToPlay() {
+        this.modalManager.showHowToPlay(this.dataLoader);
+    }
+
+    showStatistics() {
+        this.modalManager.showStatistics(this.statistics);
+    }
+
+    syncSettingsUI() {
+        const planetSlider = document.getElementById('planet-count');
+        if (planetSlider) {
+            planetSlider.value = settings.planetCount;
+            document.getElementById('planet-count-value').textContent = settings.planetCount;
+        }
+
+        const speedSlider = document.getElementById('speed-increase');
+        if (speedSlider) {
+            const percent = Math.round((settings.speedIncrease - 1) * 100);
+            speedSlider.value = percent;
+            document.getElementById('speed-increase-value').textContent = `+${percent}%`;
+        }
+
+        if (this.audioManager) {
+            const soundToggle = document.getElementById('sound-toggle');
+            const musicToggle = document.getElementById('music-toggle');
+            const soundVolume = document.getElementById('sound-volume');
+            const musicVolume = document.getElementById('music-volume');
+
+            if (soundToggle) soundToggle.checked = !!this.audioManager.soundEnabled;
+            if (musicToggle) musicToggle.checked = !!this.audioManager.musicEnabled;
+
+            if (soundVolume) {
+                soundVolume.value = Math.round(this.audioManager.soundVolume * 100);
+                document.getElementById('sound-volume-value').textContent =
+                    `${Math.round(this.audioManager.soundVolume * 100)}%`;
+            }
+            if (musicVolume) {
+                musicVolume.value = Math.round(this.audioManager.musicVolume * 100);
+                document.getElementById('music-volume-value').textContent =
+                    `${Math.round(this.audioManager.musicVolume * 100)}%`;
+            }
+        }
+    }
 }
-
-window.Menu = Menu;

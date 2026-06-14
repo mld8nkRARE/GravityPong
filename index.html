@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gravity Pong</title>
 
-    <!-- Стили -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/menu.css">
     <link rel="stylesheet" href="css/game.css">
@@ -14,52 +13,12 @@
 
 <body>
 
-    <!-- Контейнер меню -->
     <div id="menu" class="menu-container">
-        <!-- Меню генерируется через JS -->
     </div>
 
-    <!-- Игровой canvas -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Скрипты -->
-
-
-    <!-- Конфигурация -->
-    <script src="js/core/events.js"></script>
-    <script src="js/utils/DataLoader.js"></script>
-    <script src="js/utils/statistics.js"></script>
-    <script src="js/core/config.js"></script>
-
-
-    <!-- Сущности -->
-    <script src="js/entities/Ball.js"></script>
-    <script src="js/entities/Paddle.js"></script>
-    <script src="js/entities/PlayerPaddle.js"></script>
-    <script src="js/entities/AIPaddle.js"></script>
-    <script src="js/entities/Planet.js"></script>
-    <script src="js/entities/Hint.js"></script>
-
-    <!-- Системы -->
-    <script src="js/systems/Physics.js"></script>
-    <script src="js/systems/HintSystem.js"></script>
-    <script src="js/systems/AI.js"></script>
-    <script src="js/systems/Audio.js"></script>
-
-    <!-- UI -->
-    <script src="js/ui/Menu.js"></script>
-    <script src="js/ui/ModalManager.js"></script>
-    <script src="js/ui/ScreenManager.js"></script>
-    <script src="js/systems/Renderer.js"></script>
-    <script src="js/ui/PauseMenu.js"></script>
-
-    <!-- Основная игра -->
-
-    <script src="js/core/game.js"></script>
-
-    <!-- Точка входа -->
-    <script src="js/core/main.js"></script>
-    <script src="js/utils/SettingsManager.js"></script>
+    <script type="module" src="js/core/main.js"></script>
 
 </body>
 

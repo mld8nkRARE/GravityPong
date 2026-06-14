@@ -1,15 +1,14 @@
-// js/entities/Hint.js
+import { CONFIG } from '../core/config.js';
 
-class HintManager {
+export class HintManager {
     constructor(player) {
-        this.player = player; // 'player1' или 'player2'
+        this.player = player;
         this.hints = {
             freeze: CONFIG.HINTS.FREEZE.uses,
             shield: CONFIG.HINTS.SHIELD.uses,
             enlarge: CONFIG.HINTS.ENLARGE.uses
         };
 
-        // Активные эффекты
         this.activeEffects = {
             freeze: false,
             shield: false,

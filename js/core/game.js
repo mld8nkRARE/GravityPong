@@ -1,18 +1,37 @@
-// js/core/game.js
+import { CONFIG } from './config.js';
+import { settings } from './settings.js';
+import { dispatchGameEvent, EVENT_TYPES } from './events.js';
+import { Ball } from '../entities/Ball.js';
+import { PlayerPaddle } from '../entities/PlayerPaddle.js';
+import { AIPaddle } from '../entities/AIPaddle.js';
+import { Planet } from '../entities/Planet.js';
+import { HintSystem } from '../systems/HintSystem.js';
+import { Physics } from '../systems/Physics.js';
+import { AI } from '../systems/AI.js';
+import { Renderer } from '../systems/Renderer.js';
+import { PauseMenu } from '../ui/PauseMenu.js';
 
-class Game {
-    constructor(canvas) {
+export class Game {
+    constructor(canvas, inputManager, audioManager, statistics) {
         this.canvas = canvas;
+        this.inputManager = inputManager;
+        this.audioManager = audioManager;
+        this.statistics = statistics;
+
         this.renderer = new Renderer(canvas);
 
         this.state = 'menu';
-        this.keys = {};
         this.isRunning = false;
         this.animationFrameId = null;
-        this.controlsSetup = false;
+
         this.hintSystem = new HintSystem();
-        this.statistics = window.gameStatistics;
         this.pauseMenu = null;
+        this.menu = null;
+    }
+
+    setMenu(menu) {
+        this.menu = menu;
+        this.pauseMenu = new PauseMenu(this, this.audioManager, menu);
     }
 
     init() {
@@ -20,63 +39,43 @@ class Game {
         this.stop();
 
         this.resetGameObjects();
-        this.setupPauseMenu();
         this.setupControlsOnce();
-        this.setupEventListeners();
 
         this.state = 'playing';
     }
 
     resetGameObjects() {
-        // Мяч
         this.ball = new Ball(CONFIG.CANVAS.WIDTH / 2, CONFIG.CANVAS.HEIGHT / 2);
         this.ball.reset(Math.random() > 0.5 ? 1 : -1);
 
-        // Ракетки
         this.paddle1 = new PlayerPaddle(CONFIG.PADDLE.OFFSET);
 
-        if (SETTINGS.gameMode === 'AI') {
+        if (settings.gameMode === 'AI') {
             this.paddle2 = new AIPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
-            this.ai = new AI(SETTINGS.difficulty);
+            this.ai = new AI(settings.difficulty);
         } else {
             this.paddle2 = new PlayerPaddle(CONFIG.CANVAS.WIDTH - CONFIG.PADDLE.OFFSET - CONFIG.PADDLE.WIDTH);
             this.ai = null;
         }
 
-        // Планеты
         this.planets = [];
-        for (let i = 0; i < SETTINGS.planetCount; i++) {
+        for (let i = 0; i < settings.planetCount; i++) {
             this.planets.push(new Planet());
         }
 
-        // Подсказки
         this.hintSystem.reset();
 
-        // Жизни
         this.lives1 = CONFIG.GAME.MAX_LIVES;
         this.lives2 = CONFIG.GAME.MAX_LIVES;
     }
 
-    setupPauseMenu() {
-        if (!this.pauseMenu) {
-            this.pauseMenu = new PauseMenu(this);
-        }
-    }
-
     setupControlsOnce() {
-        if (this.controlsSetup) return;
-        this.controlsSetup = true;
-
         this.keydownHandler = (e) => this.handleKeyDown(e);
-        this.keyupHandler = (e) => { this.keys[e.code] = false; };
 
         window.addEventListener('keydown', this.keydownHandler);
-        window.addEventListener('keyup', this.keyupHandler);
     }
 
     handleKeyDown(e) {
-        this.keys[e.code] = true;
-
         if (this.state === 'playing') {
             if (e.code === 'Escape' || e.code === 'Space') {
                 this.pause();
@@ -99,50 +98,28 @@ class Game {
     }
 
     handlePlayerHints(e) {
-        // Игрок 1
         if (e.code === CONFIG.CONTROLS.PLAYER1.HINT1) this.activateHint('player1', 'freeze');
         if (e.code === CONFIG.CONTROLS.PLAYER1.HINT2) this.activateHint('player1', 'shield');
         if (e.code === CONFIG.CONTROLS.PLAYER1.HINT3) this.activateHint('player1', 'enlarge');
 
-        // Игрок 2 (только PVP)
-        if (SETTINGS.gameMode === 'PVP') {
+        if (settings.gameMode === 'PVP') {
             if (e.code === CONFIG.CONTROLS.PLAYER2.HINT1) this.activateHint('player2', 'freeze');
             if (e.code === CONFIG.CONTROLS.PLAYER2.HINT2) this.activateHint('player2', 'shield');
             if (e.code === CONFIG.CONTROLS.PLAYER2.HINT3) this.activateHint('player2', 'enlarge');
         }
     }
 
-    setupEventListeners() {
-        if (this.gameEventHandler) {
-            window.removeEventListener(GAME_EVENT, this.gameEventHandler);
-        }
-
-        this.gameEventHandler = (e) => {
-            const { type, ...data } = e.detail;
-            console.log(`📡 Обработано событие: ${type}`, data);
-        };
-
-        window.addEventListener(GAME_EVENT, this.gameEventHandler);
-    }
-
-    // ====================== ОСНОВНОЙ ЦИКЛ ======================
     update() {
         if (this.state !== 'playing') return;
         if (!this.ball || !this.paddle1 || !this.paddle2) return;
 
         this.hintSystem.update();
 
-        // Управление игроком 1
-        let dir1 = 0;
-        if (this.keys[CONFIG.CONTROLS.PLAYER1.UP]) dir1 = -1;
-        if (this.keys[CONFIG.CONTROLS.PLAYER1.DOWN]) dir1 = 1;
+        const dir1 = this.inputManager.getPlayer1Direction();
         this.paddle1.update(dir1);
 
-        // Управление игроком 2 или AI
-        if (SETTINGS.gameMode === 'PVP') {
-            let dir2 = 0;
-            if (this.keys[CONFIG.CONTROLS.PLAYER2.UP]) dir2 = -1;
-            if (this.keys[CONFIG.CONTROLS.PLAYER2.DOWN]) dir2 = 1;
+        if (settings.gameMode === 'PVP') {
+            const dir2 = this.inputManager.getPlayer2Direction();
             this.paddle2.update(dir2);
         } else if (this.ai) {
             this.ai.update(this.paddle2, this.ball, this.planets);
@@ -157,8 +134,12 @@ class Game {
         Physics.limitSpeed(this.ball);
         this.planets.forEach(p => p.update());
 
-        Physics.checkPaddleCollision(this.ball, this.paddle1);
-        Physics.checkPaddleCollision(this.ball, this.paddle2);
+        Physics.checkPaddleCollision(this.ball, this.paddle1, () => {
+            if (this.audioManager) this.audioManager.playSound('paddleHit');
+        });
+        Physics.checkPaddleCollision(this.ball, this.paddle2, () => {
+            if (this.audioManager) this.audioManager.playSound('paddleHit');
+        });
 
         const goal = Physics.checkGoal(this.ball);
         if (goal) this.handleGoal(goal);
@@ -169,10 +150,8 @@ class Game {
 
         if (this.state === 'menu') return;
 
-        // Планеты
-        this.planets.forEach(p => p.draw(this.renderer.ctx));
+        this.planets.forEach(p => this.renderer.drawPlanet(p));
 
-        // Щиты
         if (this.hintSystem.hintManager1?.activeEffects.shield && this.paddle1) {
             this.renderer.drawShield(this.paddle1, true);
         }
@@ -180,25 +159,19 @@ class Game {
             this.renderer.drawShield(this.paddle2, false);
         }
 
-        // Ракетки
-        this.paddle1?.draw(this.renderer.ctx);
-        this.paddle2?.draw(this.renderer.ctx);
+        this.renderer.drawPaddle(this.paddle1);
+        this.renderer.drawPaddle(this.paddle2);
 
-        // Эффект заморозки
         if (this.hintSystem.isFreezeActive() && this.ball) {
             this.renderer.drawFreezeEffect(this.ball);
         }
 
-        // Мяч
-        this.ball?.draw(this.renderer.ctx);
+        this.renderer.drawBall(this.ball);
 
-        // Жизни
         this.renderer.drawLives(this.lives1, this.lives2);
 
-        // Подсказки (иконки + таймеры)
         this.hintSystem.drawHints(this.renderer);
 
-        // Экраны состояния
         if (this.state === 'paused') this.renderer.drawPauseScreen();
         if (this.state === 'gameOver') this.renderer.drawGameOver(this.winner);
     }
@@ -223,7 +196,6 @@ class Game {
         }
     }
 
-    // ====================== ЛОГИКА ИГРЫ ======================
     pause() {
         this.state = 'paused';
         this.pauseMenu?.show();
@@ -235,21 +207,20 @@ class Game {
     }
 
     activateHint(player, type) {
-        const success = this.hintSystem.activate(player, type);
+        const success = this.hintSystem.activate(player, type, this.audioManager);
         if (!success) return;
 
-        this.hintSystem.applyEffect(player, type, this);
+        const ball = this.ball;
+        const paddle = player === 'player1' ? this.paddle1 : this.paddle2;
+        this.hintSystem.applyEffect(player, type, ball, paddle);
     }
-
-
 
     handleGoal(scorer) {
         dispatchGameEvent(EVENT_TYPES.GOAL, { scorer, lives1: this.lives1, lives2: this.lives2 });
 
-        if (window.audioManager) window.audioManager.playSound('goal');
+        if (this.audioManager) this.audioManager.playSound('goal');
 
-
-        if (this.hintSystem.checkShield(scorer, this)) {
+        if (this.hintSystem.checkShield(scorer, this.ball)) {
             return;
         }
 
@@ -269,10 +240,10 @@ class Game {
         this.state = 'gameOver';
         this.winner = winner;
 
-        this.statistics.saveResult(winner, this.lives1, this.lives2, SETTINGS.gameMode, SETTINGS.difficulty);
-        dispatchGameEvent(EVENT_TYPES.GAME_OVER, { winner, lives1: this.lives1, lives2: this.lives2, mode: SETTINGS.gameMode });
+        this.statistics.saveResult(winner, this.lives1, this.lives2, settings.gameMode, settings.difficulty);
+        dispatchGameEvent(EVENT_TYPES.GAME_OVER, { winner, lives1: this.lives1, lives2: this.lives2, mode: settings.gameMode });
 
-        if (window.audioManager) window.audioManager.playSound('gameOver');
+        if (this.audioManager) this.audioManager.playSound('gameOver');
     }
 
     restart() {
@@ -282,7 +253,7 @@ class Game {
 
     returnToMenu() {
         this.stop();
-        if (window.audioManager) window.audioManager.playMenuMusic();
+        if (this.audioManager) this.audioManager.playMenuMusic();
 
         this.state = 'menu';
         this.ball = this.paddle1 = this.paddle2 = this.ai = null;
@@ -301,5 +272,3 @@ class Game {
         }
     }
 }
-
-window.Game = Game;

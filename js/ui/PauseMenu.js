@@ -1,10 +1,12 @@
-// js/ui/PauseMenu.js
+import { settings } from '../core/settings.js';
 
-class PauseMenu {
-    constructor(game) {
+export class PauseMenu {
+    constructor(game, audioManager, menu) {
         this.game = game;
+        this.audioManager = audioManager;
+        this.menu = menu;
         this.visible = false;
-        this.elements = {}; // Кэш DOM-элементов
+        this.elements = {};
         this.createPauseMenuHTML();
         this.attachEventListeners();
     }
@@ -89,7 +91,6 @@ class PauseMenu {
     attachEventListeners() {
         const els = this.elements;
 
-        // Кнопки
         els.resumeBtn = document.getElementById('btn-resume');
         els.restartBtn = document.getElementById('btn-restart');
         els.exitBtn = document.getElementById('btn-exit');
@@ -104,65 +105,60 @@ class PauseMenu {
             this.game.returnToMenu();
         });
 
-        // Подсказки
         els.hintsToggle.addEventListener('change', (e) => {
-            SETTINGS.showHints = e.target.checked;
-            if (window.menu && window.menu.settingsManager) {
-                window.menu.settingsManager.saveSettings();
+            settings.showHints = e.target.checked;
+            if (this.menu && this.menu.settingsManager) {
+                this.menu.settingsManager.saveSettings();
             }
         });
 
-        // Звуковые эффекты
         els.soundToggle.addEventListener('change', (e) => {
-            if (window.audioManager) {
-                window.audioManager.soundEnabled = e.target.checked;
+            if (this.audioManager) {
+                this.audioManager.soundEnabled = e.target.checked;
             }
-            if (window.menu && window.menu.settingsManager) {
-                window.menu.settingsManager.saveSettings();
+            if (this.menu && this.menu.settingsManager) {
+                this.menu.settingsManager.saveSettings();
             }
         });
 
-        // Громкость звуков
         els.soundVolume.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             els.soundValue.textContent = `${value}%`;
-            if (window.audioManager) {
-                window.audioManager.setSoundVolume(value / 100);
+            if (this.audioManager) {
+                this.audioManager.setSoundVolume(value / 100);
             }
-            if (window.menu && window.menu.settingsManager) {
-                window.menu.settingsManager.saveSettings();
+            if (this.menu && this.menu.settingsManager) {
+                this.menu.settingsManager.saveSettings();
             }
         });
 
-        // Музыка
         els.musicToggle.addEventListener('change', (e) => {
-            if (window.audioManager) {
-                window.audioManager.musicEnabled = e.target.checked;
+            if (this.audioManager) {
+                this.audioManager.musicEnabled = e.target.checked;
 
                 if (e.target.checked) {
-                    if (window.audioManager.context === 'game') {
-                        window.audioManager.playGameMusic();
+                    if (this.audioManager.context === 'game') {
+                        this.audioManager.playGameMusic();
                     } else {
-                        window.audioManager.playMenuMusic();
+                        this.audioManager.playMenuMusic();
                     }
                 } else {
-                    window.audioManager.stopMusic();
+                    this.audioManager.stopMusic();
                 }
             }
-            if (window.menu && window.menu.settingsManager) {
-                window.menu.settingsManager.saveSettings();
+            if (this.menu && this.menu.settingsManager) {
+                this.menu.settingsManager.saveSettings();
             }
         });
 
-        // Громкость музыки
         els.musicVolume.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
             els.musicValue.textContent = `${value}%`;
-            if (window.audioManager) {
-                window.audioManager.setMusicVolume(value / 100);
+            if (this.audioManager) {
+                this.audioManager.setMusicVolume(value / 100);
             }
-            if (window.menu && window.menu.settingsManager) {
-                window.menu.settingsManager.saveSettings();
+            if (this.menu && this.menu.settingsManager) {
+                this.menu.settingsManager.saveSettings();
             }
         });
     }
@@ -171,19 +167,18 @@ class PauseMenu {
         this.visible = true;
         this.elements.container.style.display = 'flex';
 
-        const audio = window.audioManager;
-        if (audio) {
-            this.elements.soundToggle.checked = !!audio.soundEnabled;
-            this.elements.musicToggle.checked = !!audio.musicEnabled;
+        if (this.audioManager) {
+            this.elements.soundToggle.checked = !!this.audioManager.soundEnabled;
+            this.elements.musicToggle.checked = !!this.audioManager.musicEnabled;
 
-            this.elements.soundVolume.value = Math.round(audio.soundVolume * 100);
-            this.elements.musicVolume.value = Math.round(audio.musicVolume * 100);
+            this.elements.soundVolume.value = Math.round(this.audioManager.soundVolume * 100);
+            this.elements.musicVolume.value = Math.round(this.audioManager.musicVolume * 100);
 
-            this.elements.soundValue.textContent = `${Math.round(audio.soundVolume * 100)}%`;
-            this.elements.musicValue.textContent = `${Math.round(audio.musicVolume * 100)}%`;
+            this.elements.soundValue.textContent = `${Math.round(this.audioManager.soundVolume * 100)}%`;
+            this.elements.musicValue.textContent = `${Math.round(this.audioManager.musicVolume * 100)}%`;
         }
 
-        this.elements.hintsToggle.checked = SETTINGS.showHints !== false;
+        this.elements.hintsToggle.checked = settings.showHints !== false;
     }
 
     hide() {
@@ -193,5 +188,3 @@ class PauseMenu {
         }
     }
 }
-
-window.PauseMenu = PauseMenu;

@@ -1,12 +1,9 @@
-// js/ui/ModalManager.js
-
-class ModalManager {
+export class ModalManager {
     constructor() {
         this.currentModal = null;
     }
 
     show(html, onClose = null) {
-        // Удаляем предыдущее модальное окно
         this.close();
 
         const modalContainer = document.createElement('div');
@@ -15,7 +12,6 @@ class ModalManager {
 
         this.currentModal = modalContainer;
 
-        // Общие обработчики закрытия
         this.attachCloseHandlers(modalContainer, onClose);
     }
 
@@ -27,7 +23,6 @@ class ModalManager {
     }
 
     attachCloseHandlers(container, onClose) {
-        // Закрытие по кнопке
         container.querySelectorAll('#modal-close-btn, #stats-close').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.close();
@@ -35,7 +30,6 @@ class ModalManager {
             });
         });
 
-        // Закрытие по клику на фон (overlay)
         const overlay = container.querySelector('.modal-overlay');
         if (overlay) {
             overlay.addEventListener('click', (e) => {
@@ -46,8 +40,6 @@ class ModalManager {
             });
         }
     }
-
-    // ==================== КОНКРЕТНЫЕ МОДАЛКИ ====================
 
     showHowToPlay(dataLoader) {
         const data = dataLoader.getRules();
@@ -111,10 +103,8 @@ class ModalManager {
             </div>`;
 
         this.show(html, () => {
-            // Можно добавить дополнительные действия после закрытия
         });
 
-        // Специальная обработка кнопки очистки
         setTimeout(() => {
             const clearBtn = document.getElementById('stats-clear');
             if (clearBtn) {
@@ -122,7 +112,6 @@ class ModalManager {
                     if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
                         statistics.clearAll();
                         this.close();
-                        // Переоткрываем статистику
                         setTimeout(() => this.showStatistics(statistics, onClear), 150);
                     }
                 });
@@ -130,5 +119,3 @@ class ModalManager {
         }, 100);
     }
 }
-
-window.ModalManager = ModalManager;

@@ -1,6 +1,6 @@
-// js/systems/AI.js
+import { CONFIG } from '../core/config.js';
 
-class AI {
+export class AI {
     constructor(difficulty = 'MEDIUM') {
         this.setDifficulty(difficulty);
         this.reactionCounter = 0;
@@ -8,23 +8,21 @@ class AI {
     }
 
     setDifficulty(difficulty) {
-        const settings = CONFIG.AI_DIFFICULTY[difficulty];
-        this.speed = settings.speed;
-        this.reactionDelay = settings.reactionDelay;
-        this.accuracy = settings.accuracy;
-        this.predictTrajectory = settings.predictTrajectory;
+        const config = CONFIG.AI_DIFFICULTY[difficulty];
+        this.speed = config.speed;
+        this.reactionDelay = config.reactionDelay;
+        this.accuracy = config.accuracy;
+        this.predictTrajectory = config.predictTrajectory;
     }
 
     update(paddle, ball, planets) {
         this.reactionCounter++;
 
-        // AI реагирует не каждый кадр
         if (this.reactionCounter >= this.reactionDelay) {
             this.reactionCounter = 0;
             this.calculateTarget(ball, planets);
         }
 
-        // Движение к цели
         const paddleCenter = paddle.y + paddle.height / 2;
         const difference = this.targetY - paddleCenter;
 
@@ -40,7 +38,6 @@ class AI {
     }
 
     calculateTarget(ball, planets) {
-        // Если мяч летит не в сторону AI
         if (ball.velocityX < 0) {
             this.targetY = CONFIG.CANVAS.HEIGHT / 2;
             return;
@@ -52,12 +49,10 @@ class AI {
             this.targetY = ball.y;
         }
 
-        // Добавляем неточность
         if (Math.random() > this.accuracy) {
             this.targetY += (Math.random() - 0.5) * 100;
         }
 
-        // Ограничиваем
         this.targetY = Math.max(50, Math.min(CONFIG.CANVAS.HEIGHT - 50, this.targetY));
     }
 
@@ -103,6 +98,4 @@ class AI {
 
         return simBall.y;
     }
-
-
 }

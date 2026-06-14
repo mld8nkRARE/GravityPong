@@ -1,64 +1,48 @@
-// js/main.js
+import { CONFIG } from './config.js';
+import { AudioManager } from '../systems/Audio.js';
+import { InputManager } from '../systems/InputManager.js';
+import { Menu } from '../ui/Menu.js';
+import { Game } from './game.js';
+import { statistics } from '../utils/Statistics.js';
 
 let game = null;
 let menu = null;
 let audioManager = null;
 let musicStarted = false;
-// Инициализация при загрузке страницы
-window.addEventListener('DOMContentLoaded', () => {
-    init();
-});
 
 function init() {
-    // Получаем canvas
     const canvas = document.getElementById('gameCanvas');
 
-    // Устанавливаем размеры canvas
     canvas.width = CONFIG.CANVAS.WIDTH;
     canvas.height = CONFIG.CANVAS.HEIGHT;
 
-    // Скрываем canvas до старта игры
     canvas.style.display = 'none';
 
     audioManager = new AudioManager();
-    window.audioManager = audioManager;
     audioManager.playMenuMusic();
+
     document.addEventListener('click', startMusicOnce);
     document.addEventListener('keydown', startMusicOnce);
-    //sada
-    // Создаем меню
-    menu = new Menu();
 
-    // Создаем игру (но не запускаем)
-    game = new Game(canvas);
+    const inputManager = new InputManager();
 
-    // Делаем игру доступной глобально для меню
-    window.game = game;
-    window.menu = menu;
+    menu = new Menu(audioManager, statistics);
 
-    // Обработчик ESC для выхода в меню из игры
-    window.addEventListener('keydown', (e) => {
-        if (e.code === 'Escape' && game.state === 'playing') {
-            //pauseAndShowMenu();
-        }
-    });
+    game = new Game(canvas, inputManager, audioManager, statistics);
+    game.setMenu(menu);
+    menu.setGame(game);
 }
 
-
-// Предотвращаем скролл страницы при нажатии стрелок
-window.addEventListener('keydown', (e) => {
-    if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {
-        e.preventDefault();
-    }
-});
-
 function startMusicOnce() {
-    if (!musicStarted && window.audioManager) {
+    if (!musicStarted && audioManager) {
         audioManager.playMenuMusic();
         musicStarted = true;
 
-        // Удаляем слушатели после первого запуска
         document.removeEventListener('click', startMusicOnce);
         document.removeEventListener('keydown', startMusicOnce);
     }
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    init();
+});

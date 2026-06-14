@@ -1,8 +1,9 @@
-// js/utils/SettingsManager.js
+import { settings } from '../core/settings.js';
 
-class SettingsManager {
-    constructor() {
+export class SettingsManager {
+    constructor(audioManager) {
         this.key = 'gravityPongSettings';
+        this.audioManager = audioManager;
         this.loadSettings();
     }
 
@@ -13,26 +14,21 @@ class SettingsManager {
 
             const parsed = JSON.parse(saved);
 
-            // Игровые настройки
-            Object.assign(SETTINGS, {
-                planetCount: parsed.planetCount ?? SETTINGS.planetCount,
-                speedIncrease: parsed.speedIncrease ?? SETTINGS.speedIncrease,
-                showHints: parsed.showHints ?? true,           // важно: default true
+            Object.assign(settings, {
+                planetCount: parsed.planetCount ?? settings.planetCount,
+                speedIncrease: parsed.speedIncrease ?? settings.speedIncrease,
+                showHints: parsed.showHints ?? true,
             });
 
-            // Аудио настройки
-            if (window.audioManager) {
-                window.audioManager.soundEnabled = parsed.soundEnabled ?? true;
-                window.audioManager.musicEnabled = parsed.musicEnabled ?? true;
-                window.audioManager.soundVolume = parsed.soundVolume ?? 0.5;
-                window.audioManager.musicVolume = parsed.musicVolume ?? 0.3;
+            if (this.audioManager) {
+                this.audioManager.soundEnabled = parsed.soundEnabled ?? true;
+                this.audioManager.musicEnabled = parsed.musicEnabled ?? true;
+                this.audioManager.soundVolume = parsed.soundVolume ?? 0.5;
+                this.audioManager.musicVolume = parsed.musicVolume ?? 0.3;
 
-                // Применяем значения
-                window.audioManager.setSoundVolume(window.audioManager.soundVolume);
-                window.audioManager.setMusicVolume(window.audioManager.musicVolume);
+                this.audioManager.setSoundVolume(this.audioManager.soundVolume);
+                this.audioManager.setMusicVolume(this.audioManager.musicVolume);
             }
-
-            console.log('✅ Настройки успешно загружены');
         } catch (e) {
             console.warn('Ошибка загрузки настроек', e);
         }
@@ -40,12 +36,12 @@ class SettingsManager {
 
     saveSettings() {
         try {
-            const audio = window.audioManager || {};
+            const audio = this.audioManager || {};
 
             const dataToSave = {
-                planetCount: SETTINGS.planetCount,
-                speedIncrease: SETTINGS.speedIncrease,
-                showHints: SETTINGS.showHints,
+                planetCount: settings.planetCount,
+                speedIncrease: settings.speedIncrease,
+                showHints: settings.showHints,
                 soundEnabled: !!audio.soundEnabled,
                 musicEnabled: !!audio.musicEnabled,
                 soundVolume: audio.soundVolume ?? 0.5,
@@ -63,5 +59,3 @@ class SettingsManager {
         location.reload();
     }
 }
-
-window.SettingsManager = SettingsManager;

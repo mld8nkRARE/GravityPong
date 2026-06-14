@@ -5,15 +5,28 @@ class Menu {
     this.dataLoader = new DataLoader();
     this.settingsManager = new SettingsManager();
     this.statistics = window.gameStatistics;
+    this.modalManager = new ModalManager();
+    this.screenManager = new ScreenManager();
     this.createMenuHTML();
+    this.screenManager.init();
     this.attachEventListeners();
     this.loadGameData();
   }
 
+  // ====================== СОЗДАНИЕ HTML ======================
   createMenuHTML() {
     const menuContainer = document.getElementById('menu');
-
     menuContainer.innerHTML = `
+            ${this.getMainMenuHTML()}
+            ${this.getModeMenuHTML()}
+            ${this.getDifficultyMenuHTML()}
+            ${this.getSettingsMenuHTML()}
+            ${this.getControlsMenuHTML()}
+        `;
+  }
+
+  getMainMenuHTML() {
+    return `
             <div id="main-menu" class="menu-screen active">
                 <h1 class="game-title">GRAVITY PONG</h1>
                 <div class="menu-buttons">
@@ -23,8 +36,11 @@ class Menu {
                     <button class="menu-btn" id="btn-settings">Настройки</button>
                     <button class="menu-btn" id="btn-controls">Управление</button>
                 </div>
-            </div>
+            </div>`;
+  }
 
+  getModeMenuHTML() {
+    return `
             <div id="mode-menu" class="menu-screen">
                 <h2>Выбор режима</h2>
                 <div class="mode-selection">
@@ -40,8 +56,11 @@ class Menu {
                     </div>
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-mode">Назад</button>
-            </div>
+            </div>`;
+  }
 
+  getDifficultyMenuHTML() {
+    return `
             <div id="difficulty-menu" class="menu-screen">
                 <h2>Выбор сложности</h2>
                 <div class="difficulty-selection">
@@ -62,9 +81,11 @@ class Menu {
                     </div>
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-difficulty">Назад</button>
-            </div>
+            </div>`;
+  }
 
-
+  getSettingsMenuHTML() {
+    return `
             <div id="settings-menu" class="menu-screen">
                 <h2>Настройки</h2>
                 <div class="settings-container">
@@ -111,8 +132,11 @@ class Menu {
                     </div>
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-settings">Назад</button>
-            </div>
+            </div>`;
+  }
 
+  getControlsMenuHTML() {
+    return `
             <div id="controls-menu" class="menu-screen">
                 <h2>Управление</h2>
                 <div class="controls-container">
@@ -134,37 +158,40 @@ class Menu {
                     </div>
                 </div>
                 <button class="menu-btn back-btn" id="btn-back-controls">Назад</button>
-            </div>
-        `;
-
-
+            </div>`;
   }
-
-
-
-
-
   attachEventListeners() {
+    this.attachMainMenuListeners();
+    this.attachModeAndDifficultyListeners();
+    this.attachSettingsListeners();
+    this.attachBackButtons();
+  }
+  attachMainMenuListeners() {
     document.getElementById('btn-play').addEventListener('click', () => this.showScreen('mode-menu'));
+    document.getElementById('btn-howtoplay').addEventListener('click', () => this.showHowToPlay());
+    document.getElementById('btn-stats').addEventListener('click', () => this.showStatistics());
     document.getElementById('btn-settings').addEventListener('click', () => this.showScreen('settings-menu'));
     document.getElementById('btn-controls').addEventListener('click', () => this.showScreen('controls-menu'));
-    document.getElementById('btn-howtoplay').addEventListener('click', () => { this.showHowToPlay(); });
-    document.getElementById('btn-stats').addEventListener('click', () => { this.showStatistics(); });
+  }
+  attachModeAndDifficultyListeners() {
+    // Mode cards
     document.querySelectorAll('.mode-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         SETTINGS.gameMode = card.dataset.mode;
+
         setTimeout(() => {
           if (SETTINGS.gameMode === 'AI') {
             this.showScreen('difficulty-menu');
           } else {
-            this.startGame(); // сразу стартуем PvP
+            this.startGame();
           }
         }, 150);
       });
     });
 
+    // Difficulty cards
     document.querySelectorAll('.difficulty-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.difficulty-card').forEach(c => c.classList.remove('selected'));
@@ -173,42 +200,16 @@ class Menu {
         setTimeout(() => this.startGame(), 150);
       });
     });
-
-    document.addEventListener('click', (e) => {
-      const card = e.target.closest('.paddle-shape-card');
-      if (card) {
-        const player = parseInt(card.dataset.player);
-        const shape = card.dataset.shape;
-        document.querySelectorAll(`#player${player}-shapes .paddle-shape-card`).forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-
-        if (player === 1) SETTINGS.player1Shape = shape;
-        else SETTINGS.player2Shape = shape;
-      }
-    });
-
-    document.querySelectorAll('.back-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.id;
-        if (id === 'btn-back-mode') this.showScreen('main-menu');
-        else if (id === 'btn-back-difficulty') this.showScreen('mode-menu');
-        else if (id === 'btn-back-paddle') this.showScreen(SETTINGS.gameMode === 'AI' ? 'difficulty-menu' : 'mode-menu');
-        else this.showScreen('main-menu');
-      });
-    });
-
-    const startBtn = document.getElementById('btn-start-game');
-    if (startBtn) {
-      startBtn.addEventListener('click', () => this.startGame());
-    }
-
-    // Настройки
+  }
+  attachSettingsListeners() {
+    // Планеты
     document.getElementById('planet-count').addEventListener('input', (e) => {
       SETTINGS.planetCount = parseInt(e.target.value);
       document.getElementById('planet-count-value').textContent = e.target.value;
       this.settingsManager.saveSettings();
     });
 
+    // Ускорение
     document.getElementById('speed-increase').addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
       SETTINGS.speedIncrease = 1 + val / 100;
@@ -217,72 +218,57 @@ class Menu {
     });
 
     // Звуковые настройки
-    document.getElementById('sound-toggle').addEventListener('change', (e) => {
-      if (window.audioManager) {
-        window.audioManager.toggleSound();
-      }
-      this.settingsManager.saveSettings();
-    });
-
     document.getElementById('sound-volume').addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      document.getElementById('sound-volume-value').textContent = `${value}%`;
-      if (window.audioManager) {
-        window.audioManager.setSoundVolume(value / 100);
-      }
-      this.settingsManager.saveSettings();
-    });
-
-    document.getElementById('music-toggle').addEventListener('change', (e) => {
-      if (window.audioManager) {
-        window.audioManager.toggleMusic();
-      }
+      const value = parseInt(e.target.value) / 100;
+      document.getElementById('sound-volume-value').textContent = `${parseInt(e.target.value)}%`;
+      if (window.audioManager) window.audioManager.setSoundVolume(value);
       this.settingsManager.saveSettings();
     });
 
     document.getElementById('music-volume').addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      document.getElementById('music-volume-value').textContent = `${value}%`;
-      if (window.audioManager) {
-        window.audioManager.setMusicVolume(value / 100);
-      }
+      const value = parseInt(e.target.value) / 100;
+      document.getElementById('music-volume-value').textContent = `${parseInt(e.target.value)}%`;
+      if (window.audioManager) window.audioManager.setMusicVolume(value);
+      this.settingsManager.saveSettings();
+    });
+
+    document.getElementById('sound-toggle').addEventListener('change', (e) => {
+      if (window.audioManager) window.audioManager.toggleSound();
+      this.settingsManager.saveSettings();
+    });
+
+    document.getElementById('music-toggle').addEventListener('change', (e) => {
+      if (window.audioManager) window.audioManager.toggleMusic();
       this.settingsManager.saveSettings();
     });
   }
-
-  showScreen(screenId) {
-    // Убираем все active и скрываем все экраны
-    const allScreens = document.querySelectorAll('.menu-screen');
-    allScreens.forEach(screen => {
-      screen.classList.remove('active');
-      screen.style.display = 'none';
+  attachBackButtons() {
+    document.querySelectorAll('.back-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.id;
+        if (id === 'btn-back-mode') this.showScreen('main-menu');
+        else if (id === 'btn-back-difficulty') this.showScreen('mode-menu');
+        else this.showScreen('main-menu');
+      });
     });
+  }
+  // ====================== НАВИГАЦИЯ ======================
+  showScreen(screenId) {
+    this.screenManager.show(screenId);
 
-    // Показываем нужный экран
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-      targetScreen.classList.add('active');
-      targetScreen.style.display = 'flex';
-      // Синхронизируем настройки при открытии экрана настроек
-      if (screenId === 'settings-menu') {
-        this.syncSettingsUI();
-      }
-    } else {
-      // Fallback на главное меню
-      const mainMenu = document.getElementById('main-menu');
-      if (mainMenu) {
-        mainMenu.classList.add('active');
-        mainMenu.style.display = 'flex';
-      }
+    if (screenId === 'settings-menu') {
+      this.syncSettingsUI();
     }
   }
-
+  // ====================== ОСНОВНЫЕ ДЕЙСТВИЯ ======================
   startGame() {
     document.getElementById('menu').style.display = 'none';
     document.getElementById('gameCanvas').style.display = 'block';
+
     if (window.audioManager) {
       window.audioManager.playGameMusic();
     }
+
     if (window.game) {
       window.game.stop();
       window.game.init();
@@ -290,124 +276,31 @@ class Menu {
     }
   }
 
+  async loadGameData() {
+    const data = await this.dataLoader.loadRules();
+    console.log('📋 Загружены данные игры:', data);
+  }
+
   show() {
     document.getElementById('menu').style.display = 'flex';
     this.showScreen('main-menu');
   }
-  async loadGameData() {
-    const data = await this.dataLoader.loadRules();
-    console.log('Загружены данные игры:', data);
-  }
+  // ====================== МОДАЛЬНЫЕ ОКНА ======================
   showHowToPlay() {
-    const data = this.dataLoader.getRules();
-    const rulesList = this.dataLoader.getRulesList();
-
-    // Удаляем предыдущее модальное окно, если есть
-    const oldModal = document.getElementById('howtoplay-modal');
-    if (oldModal) oldModal.remove();
-
-    const modalHTML = `
-            <div id="howtoplay-modal" class="modal-overlay">
-                <div class="modal-content">
-                    <h2>${data.gameTitle || 'GRAVITY PONG'} — Как играть</h2>
-                    <p>${data.description || 'Описание игры'}</p>
-                    
-                    <h3>Правила:</h3>
-                    <ul class="rules-list">
-                        ${rulesList.map(rule => `<li>${rule}</li>`).join('')}
-                    </ul>
-
-                    <div class="modal-buttons">
-                        <button class="menu-btn" id="modal-close-btn">Закрыть</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = modalHTML;
-    document.body.appendChild(modalContainer);
-
-    // Обработчик закрытия
-    document.getElementById('modal-close-btn').addEventListener('click', () => {
-      modalContainer.remove();
-    });
-
-    // Закрытие по клику на фон
-    modalContainer.querySelector('.modal-overlay').addEventListener('click', (e) => {
-      if (e.target === modalContainer.querySelector('.modal-overlay')) {
-        modalContainer.remove();
-      }
-    });
+    this.modalManager.showHowToPlay(this.dataLoader);
   }
+
   showStatistics() {
-    const stats = this.statistics.getHistory();
-    const winStats = this.statistics.getWinStats();
-
-    let html = `
-            <div id="stats-modal" class="modal-overlay">
-                <div class="modal-content stats-modal">
-                    <h2>📊 Статистика</h2>
-                    
-                    <div class="stats-summary">
-                        <div>Всего игр: <strong>${winStats.total}</strong></div>
-                        <div>Побед Игрока 1: <strong>${winStats.player1}</strong></div>
-                        <div>Побед Игрока 2 / AI: <strong>${winStats.player2}</strong></div>
-                    </div>
-
-                    <h3>Последние матчи</h3>
-                    <div class="stats-list">
-                        ${stats.length === 0 ?
-        '<p style="color:#888; text-align:center; padding:20px;">Пока нет завершённых игр</p>' :
-        stats.map((game, i) => `
-                                <div class="stat-item">
-                                    <span>${new Date(game.date).toLocaleDateString('ru-RU')}</span>
-                                    <span>${game.mode} ${game.difficulty ? `(${game.difficulty})` : ''}</span>
-                                    <span class="${game.winner === 'player1' ? 'win' : 'lose'}">
-                                        ${game.winner === 'player1' ? 'Победа 1' : 'Победа 2'}
-                                    </span>
-                                </div>
-                            `).join('')}
-                    </div>
-
-                    <div class="modal-buttons">
-                        <button class="menu-btn" id="stats-clear">Очистить статистику</button>
-                        <button class="menu-btn" id="stats-close">Закрыть</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-    // Удаляем старое модальное окно
-    const old = document.getElementById('stats-modal');
-    if (old) old.parentElement.remove();
-
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = html;
-    document.body.appendChild(modalContainer);
-
-    document.getElementById('stats-close').addEventListener('click', () => {
-      modalContainer.remove();
-    });
-
-    document.getElementById('stats-clear').addEventListener('click', () => {
-      if (confirm('Вы уверены, что хотите очистить всю статистику?')) {
-        this.statistics.clearAll();
-        modalContainer.remove();
-        // Сразу показываем обновлённое окно
-        setTimeout(() => this.showStatistics(), 100);
-      }
-    });
+    this.modalManager.showStatistics(this.statistics);
   }
   syncSettingsUI() {
-    // Планеты
+    // Планеты и ускорение
     const planetSlider = document.getElementById('planet-count');
     if (planetSlider) {
       planetSlider.value = SETTINGS.planetCount;
       document.getElementById('planet-count-value').textContent = SETTINGS.planetCount;
     }
 
-    // Ускорение
     const speedSlider = document.getElementById('speed-increase');
     if (speedSlider) {
       const percent = Math.round((SETTINGS.speedIncrease - 1) * 100);
@@ -415,17 +308,25 @@ class Menu {
       document.getElementById('speed-increase-value').textContent = `+${percent}%`;
     }
 
-    // Громкость
+    // Чекбоксы и громкость
     if (window.audioManager) {
-      const soundVol = document.getElementById('sound-volume');
-      const musicVol = document.getElementById('music-volume');
-      if (soundVol) {
-        soundVol.value = Math.round(window.audioManager.soundVolume * 100);
-        document.getElementById('sound-volume-value').textContent = `${Math.round(window.audioManager.soundVolume * 100)}%`;
+      const soundToggle = document.getElementById('sound-toggle');
+      const musicToggle = document.getElementById('music-toggle');
+      const soundVolume = document.getElementById('sound-volume');
+      const musicVolume = document.getElementById('music-volume');
+
+      if (soundToggle) soundToggle.checked = !!window.audioManager.soundEnabled;
+      if (musicToggle) musicToggle.checked = !!window.audioManager.musicEnabled;
+
+      if (soundVolume) {
+        soundVolume.value = Math.round(window.audioManager.soundVolume * 100);
+        document.getElementById('sound-volume-value').textContent =
+          `${Math.round(window.audioManager.soundVolume * 100)}%`;
       }
-      if (musicVol) {
-        musicVol.value = Math.round(window.audioManager.musicVolume * 100);
-        document.getElementById('music-volume-value').textContent = `${Math.round(window.audioManager.musicVolume * 100)}%`;
+      if (musicVolume) {
+        musicVolume.value = Math.round(window.audioManager.musicVolume * 100);
+        document.getElementById('music-volume-value').textContent =
+          `${Math.round(window.audioManager.musicVolume * 100)}%`;
       }
     }
   }

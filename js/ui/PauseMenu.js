@@ -4,14 +4,14 @@ class PauseMenu {
     constructor(game) {
         this.game = game;
         this.visible = false;
-        this.hintsEnabled = true;
+        this.elements = {}; // Кэш DOM-элементов
         this.createPauseMenuHTML();
         this.attachEventListeners();
     }
 
     createPauseMenuHTML() {
-        const existingMenu = document.getElementById('pause-menu');
-        if (existingMenu) existingMenu.remove();
+        const existing = document.getElementById('pause-menu');
+        if (existing) existing.remove();
 
         const pauseMenu = document.createElement('div');
         pauseMenu.id = 'pause-menu';
@@ -70,101 +70,127 @@ class PauseMenu {
         `;
 
         document.body.appendChild(pauseMenu);
+        this.cacheElements();
     }
 
-    // js/ui/PauseMenu.js - метод attachEventListeners
+    cacheElements() {
+        this.elements = {
+            container: document.getElementById('pause-menu'),
+            hintsToggle: document.getElementById('pause-hints-toggle'),
+            soundToggle: document.getElementById('pause-sound-toggle'),
+            musicToggle: document.getElementById('pause-music-toggle'),
+            soundVolume: document.getElementById('pause-sound-volume'),
+            musicVolume: document.getElementById('pause-music-volume'),
+            soundValue: document.getElementById('pause-sound-volume-value'),
+            musicValue: document.getElementById('pause-music-volume-value')
+        };
+    }
 
     attachEventListeners() {
-        document.getElementById('btn-resume').addEventListener('click', () => {
-            this.game.resume();
-        });
+        const els = this.elements;
 
-        document.getElementById('btn-restart').addEventListener('click', () => {
+        // Кнопки
+        els.resumeBtn = document.getElementById('btn-resume');
+        els.restartBtn = document.getElementById('btn-restart');
+        els.exitBtn = document.getElementById('btn-exit');
+
+        els.resumeBtn.addEventListener('click', () => this.game.resume());
+        els.restartBtn.addEventListener('click', () => {
             this.hide();
             this.game.restart();
         });
-
-        document.getElementById('btn-exit').addEventListener('click', () => {
-            // Сначала скрываем меню паузы
+        els.exitBtn.addEventListener('click', () => {
             this.hide();
-            // Затем возвращаемся в главное меню (это остановит игру)
             this.game.returnToMenu();
         });
 
         // Подсказки
-        document.getElementById('pause-hints-toggle').addEventListener('change', (e) => {
+        els.hintsToggle.addEventListener('change', (e) => {
             SETTINGS.showHints = e.target.checked;
+            if (window.menu && window.menu.settingsManager) {
+                window.menu.settingsManager.saveSettings();
+            }
         });
 
-        // Звук
-        document.getElementById('pause-sound-toggle').addEventListener('change', (e) => {
+        // Звуковые эффекты
+        els.soundToggle.addEventListener('change', (e) => {
             if (window.audioManager) {
                 window.audioManager.soundEnabled = e.target.checked;
             }
+            if (window.menu && window.menu.settingsManager) {
+                window.menu.settingsManager.saveSettings();
+            }
         });
 
-        document.getElementById('pause-sound-volume').addEventListener('input', (e) => {
+        // Громкость звуков
+        els.soundVolume.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            document.getElementById('pause-sound-volume-value').textContent = `${value}%`;
+            els.soundValue.textContent = `${value}%`;
             if (window.audioManager) {
                 window.audioManager.setSoundVolume(value / 100);
-                if (window.menu && window.menu.settingsManager) {
-                    window.menu.settingsManager.saveSettings();
-                }
+            }
+            if (window.menu && window.menu.settingsManager) {
+                window.menu.settingsManager.saveSettings();
             }
         });
 
         // Музыка
-        // Музыка
-        document.getElementById('pause-music-toggle').addEventListener('change', (e) => {
+        els.musicToggle.addEventListener('change', (e) => {
             if (window.audioManager) {
-                // ✅ Просто устанавливаем флаг, остальное сделает toggleMusic()
                 window.audioManager.musicEnabled = e.target.checked;
 
                 if (e.target.checked) {
-                    // Включаем музыку
                     if (window.audioManager.context === 'game') {
                         window.audioManager.playGameMusic();
                     } else {
                         window.audioManager.playMenuMusic();
                     }
                 } else {
-                    // Выключаем музыку
                     window.audioManager.stopMusic();
                 }
             }
+            if (window.menu && window.menu.settingsManager) {
+                window.menu.settingsManager.saveSettings();
+            }
         });
 
-        document.getElementById('pause-music-volume').addEventListener('input', (e) => {
+        // Громкость музыки
+        els.musicVolume.addEventListener('input', (e) => {
             const value = parseInt(e.target.value);
-            document.getElementById('pause-music-volume-value').textContent = `${value}%`;
+            els.musicValue.textContent = `${value}%`;
             if (window.audioManager) {
                 window.audioManager.setMusicVolume(value / 100);
-                if (window.menu && window.menu.settingsManager) {
-                    window.menu.settingsManager.saveSettings();
-                }
+            }
+            if (window.menu && window.menu.settingsManager) {
+                window.menu.settingsManager.saveSettings();
             }
         });
     }
 
     show() {
         this.visible = true;
-        const menu = document.getElementById('pause-menu');
-        menu.style.display = 'flex';
+        this.elements.container.style.display = 'flex';
 
-        // Синхронизируем состояние чекбоксов
-        if (window.audioManager) {
-            document.getElementById('pause-sound-toggle').checked = window.audioManager.soundEnabled;
-            document.getElementById('pause-music-toggle').checked = window.audioManager.musicEnabled;
-            document.getElementById('pause-sound-volume').value = window.audioManager.soundVolume * 100;
-            document.getElementById('pause-music-volume').value = window.audioManager.musicVolume * 100;
+        const audio = window.audioManager;
+        if (audio) {
+            this.elements.soundToggle.checked = !!audio.soundEnabled;
+            this.elements.musicToggle.checked = !!audio.musicEnabled;
+
+            this.elements.soundVolume.value = Math.round(audio.soundVolume * 100);
+            this.elements.musicVolume.value = Math.round(audio.musicVolume * 100);
+
+            this.elements.soundValue.textContent = `${Math.round(audio.soundVolume * 100)}%`;
+            this.elements.musicValue.textContent = `${Math.round(audio.musicVolume * 100)}%`;
         }
-        document.getElementById('pause-hints-toggle').checked = SETTINGS.showHints !== false;
+
+        this.elements.hintsToggle.checked = SETTINGS.showHints !== false;
     }
 
     hide() {
         this.visible = false;
-        document.getElementById('pause-menu').style.display = 'none';
+        if (this.elements.container) {
+            this.elements.container.style.display = 'none';
+        }
     }
 }
 

@@ -13,7 +13,7 @@ export class HintSystem {
         this.hintManager2.update();
     }
 
-    activate(player, type, audioManager) {
+    activate(player, type) {
         const manager = player === 'player1' ? this.hintManager1 : this.hintManager2;
         if (!manager.activate(type)) return false;
 
@@ -22,10 +22,6 @@ export class HintSystem {
             hintType: type,
             remainingUses: manager.hints[type]
         });
-
-        if (audioManager) {
-            audioManager.playSound('powerup');
-        }
 
         return true;
     }

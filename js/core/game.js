@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { settings } from './settings.js';
-import { dispatchGameEvent, EVENT_TYPES } from './events.js';
+import { GAME_EVENT, dispatchGameEvent, EVENT_TYPES } from './events.js';
 import { Ball } from '../entities/Ball.js';
 import { PlayerPaddle } from '../entities/PlayerPaddle.js';
 import { AIPaddle } from '../entities/AIPaddle.js';
@@ -27,6 +27,35 @@ export class Game {
         this.hintSystem = new HintSystem();
         this.pauseMenu = null;
         this.menu = null;
+
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        window.addEventListener(GAME_EVENT, (e) => {
+            const { type, ...data } = e.detail;
+            this.handleGameEvent(type, data);
+        });
+    }
+
+    handleGameEvent(type, data) {
+        switch (type) {
+            case EVENT_TYPES.GOAL:
+                if (this.audioManager) this.audioManager.playSound('goal');
+                break;
+
+            case EVENT_TYPES.HINT_USED:
+                if (this.audioManager) this.audioManager.playSound('powerup');
+                break;
+
+            case EVENT_TYPES.GAME_OVER:
+                if (this.audioManager) this.audioManager.playSound('gameOver');
+                break;
+
+            case EVENT_TYPES.PAUSE:
+                if (this.audioManager) this.audioManager.playSound('wallHit');
+                break;
+        }
     }
 
     setMenu(menu) {
@@ -212,16 +241,18 @@ export class Game {
 
     pause() {
         this.state = 'paused';
+        dispatchGameEvent(EVENT_TYPES.PAUSE);
         this.pauseMenu?.show();
     }
 
     resume() {
         this.state = 'playing';
+        dispatchGameEvent(EVENT_TYPES.RESUME);
         this.pauseMenu?.hide();
     }
 
     activateHint(player, type) {
-        const success = this.hintSystem.activate(player, type, this.audioManager);
+        const success = this.hintSystem.activate(player, type);
         if (!success) return;
 
         const ball = this.ball;
@@ -231,8 +262,6 @@ export class Game {
 
     handleGoal(scorer) {
         dispatchGameEvent(EVENT_TYPES.GOAL, { scorer, lives1: this.lives1, lives2: this.lives2 });
-
-        if (this.audioManager) this.audioManager.playSound('goal');
 
         if (this.hintSystem.checkShield(scorer, this.ball)) {
             return;
@@ -268,8 +297,6 @@ export class Game {
         };
 
         this.renderer.drawHintAward(hintNames[hintType]);
-
-        if (this.audioManager) this.audioManager.playSound('powerup');
     }
 
     gameOver(winner) {
@@ -278,8 +305,6 @@ export class Game {
 
         this.statistics.saveResult(winner, this.lives1, this.lives2, settings.gameMode, settings.difficulty);
         dispatchGameEvent(EVENT_TYPES.GAME_OVER, { winner, lives1: this.lives1, lives2: this.lives2, mode: settings.gameMode });
-
-        if (this.audioManager) this.audioManager.playSound('gameOver');
     }
 
     restart() {
